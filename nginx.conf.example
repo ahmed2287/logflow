@@ -1,0 +1,40 @@
+# hand-written (stack: php)  — project lives in $HOME, not /var/www/html,
+# so setup-local-projects does not manage this file.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name almasrylog.test;
+
+    # Docroot is public/ on purpose: data/ (users.json, audit.log), src/,
+    # views/ and cli/ sit one level up and are unreachable over HTTP.
+    root /home/hamdy/almasrylog/public;
+    index index.php;
+
+    # Single front controller — every route is ?page=... on index.php.
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        fastcgi_param DOCUMENT_ROOT   $realpath_root;
+        # Tailing a large log or deleting thousands of files can outlast the
+        # default 60s, so give FPM room.
+        fastcgi_read_timeout 300;
+        fastcgi_buffers 16 16k;
+        fastcgi_buffer_size 32k;
+    }
+
+    # The page ships an inline SVG favicon, so /favicon.ico is just log noise.
+    location = /favicon.ico { access_log off; log_not_found off; return 204; }
+
+    location ~ /\.(?!well-known).* { deny all; }
+
+    # The dashboard has no uploads at all — no reason to accept large bodies.
+    client_max_body_size 2M;
+
+    access_log /var/log/nginx/almasrylog.access.log;
+    error_log  /var/log/nginx/almasrylog.error.log;
+}

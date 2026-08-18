@@ -1,0 +1,11 @@
+# Runtime state — never commit. Contains bcrypt password hashes, the configured
+# log path, and the activity trail (usernames + IPs).
+# Deny-by-default so rotated logs (audit-2026-01-01.log) can't slip through.
+data/*
+!data/.htaccess
+
+# Editor / OS noise
+.idea/
+.vscode/
+*.swp
+.DS_Store
