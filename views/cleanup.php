@@ -42,15 +42,27 @@ layout_start();
     <button class="btn btn-primary" type="submit">🔍 <?= __('معاينة') ?></button>
   </div>
 
-  <div class="quick-days">
+  <div class="quick-days" id="quick-days">
     <span class="muted"><?= __('اختصارات — أقدم من:') ?></span>
-    <?php foreach (['أسبوع' => 7, 'شهر' => 30, '3 شهور' => 90, '6 شهور' => 180, 'سنة' => 365] as $label => $daysAgo): ?>
+    <?php foreach (['أسبوع' => 7, 'شهر واحد' => 30, '3 شهور' => 90, '6 شهور' => 180, 'سنة واحدة' => 365] as $label => $daysAgo): ?>
       <?php $quick = date('Y-m-d', time() - $daysAgo * 86400); ?>
-      <a class="chip-day <?= $before === $quick ? 'is-active' : '' ?>"
-         href="?page=cleanup&amp;before=<?= $quick ?>&amp;file=<?= e(urlencode($target ?: '*')) ?><?= e(src_qs()) ?>"><?= __($label) ?></a>
+      <button type="button" class="chip-day <?= $before === $quick ? 'is-active' : '' ?>"
+              data-date="<?= $quick ?>"><?= __($label) ?></button>
     <?php endforeach; ?>
+    <span class="muted small"><?= __('الاختصار يملأ التاريخ فقط — المعاينة تبدأ بزرار «معاينة».') ?></span>
   </div>
 </form>
+
+<script>
+// Shortcut chips only fill the date field; nothing runs until "Preview".
+document.querySelectorAll('#quick-days [data-date]').forEach(function (chip) {
+  chip.addEventListener('click', function () {
+    document.querySelector('input[name=before]').value = chip.dataset.date;
+    document.querySelectorAll('#quick-days [data-date]').forEach(function (c) { c.classList.remove('is-active'); });
+    chip.classList.add('is-active');
+  });
+});
+</script>
 
 <?php if (!empty($skipped)): ?>
   <div class="alert alert-warn">
@@ -107,7 +119,12 @@ layout_start();
     </div>
 
     <form class="panel panel-danger" method="post" action="?page=cleanup"
-          data-confirm="<?= e(__('آخر تأكيد: سيتم حذف السطور نهائيًا.')) ?>">
+          data-confirm="<?= e(sprintf(
+              __('سيتم حذف %s سطر نهائيًا من %d ملف (الأقدم من %s). لا يمكن التراجع عن هذه العملية.'),
+              number_format($totalRemove),
+              count(array_filter($preview, fn($f) => $f['scan']['remove'] > 0)),
+              date('d/m/Y', strtotime($before))
+          )) ?>">
       <?= csrf_field() ?>
       <input type="hidden" name="before" value="<?= e($before) ?>">
       <input type="hidden" name="file" value="<?= e($target) ?>">

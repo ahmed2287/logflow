@@ -305,6 +305,22 @@ input[type=checkbox] { width: 1.05rem; height: 1.05rem; accent-color: var(--acce
 }
 .day-bar span { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
 
+/* confirmation modal for destructive actions */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0, 0, 0, .55);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+}
+.modal-box {
+  background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  max-width: 440px; width: 100%; padding: 1.25rem 1.4rem;
+}
+.modal-box h3 { margin: 0 0 .6rem; font-size: 1.1rem; color: var(--danger); }
+.modal-box p { margin: 0 0 1.1rem; line-height: 1.7; }
+.modal-actions { display: flex; justify-content: flex-end; gap: .5rem; }
+
 /* server monitor */
 .sys-bar { margin-top: .5rem; }
 .day-bar.bar-warn span { background: var(--warn); }
@@ -395,6 +411,7 @@ input[type=checkbox] { width: 1.05rem; height: 1.05rem; accent-color: var(--acce
   padding: .2rem .5rem; border-radius: 999px;
   background: var(--surface-2); border: 1px solid var(--border);
   font-size: .85rem; font-family: var(--mono); color: var(--text);
+  cursor: pointer; /* also used as <button> for the date shortcuts */
 }
 .chip-day:hover { border-color: var(--accent); text-decoration: none; }
 .chip-day.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }

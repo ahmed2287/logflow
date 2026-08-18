@@ -15,7 +15,7 @@ $nav = [
     ['href' => '?page=cleanup',          'label' => 'تنظيف',            'icon' => '🧹', 'admin' => true,  'active' => $current === 'cleanup'],
     ['href' => '?page=audit&scope=mine', 'label' => 'سجل نشاطي',        'icon' => '🙋', 'admin' => false, 'active' => $auditScope === 'mine'],
     ['href' => '?page=audit&scope=all',  'label' => 'سجل نشاط اللوحة',  'icon' => '🕵️', 'admin' => true,  'active' => $auditScope === 'all'],
-    ['href' => '?page=server',           'label' => 'السيرفر',          'icon' => '🖥️', 'admin' => true,  'active' => $current === 'server'],
+    ['href' => '?page=server',           'label' => 'السيرفر',          'icon' => '🖥️', 'admin' => false, 'active' => $current === 'server'],
     ['href' => '?page=settings',         'label' => 'الإعدادات',        'icon' => '⚙️', 'admin' => true,  'active' => $current === 'settings'],
     ['href' => '?page=users',            'label' => 'المستخدمون',       'icon' => '👥', 'admin' => true,  'active' => $current === 'users'],
 ];
@@ -79,6 +79,13 @@ $nav = [
 </main>
 
 <footer class="footer">AlmasryLog — <?= e(__('لوحة إدارة اللوجات')) ?> · <?= date('Y') ?></footer>
+<script>
+window.APP_I18N = {
+  title:  <?= json_encode(__('تأكيد العملية'), JSON_UNESCAPED_UNICODE) ?>,
+  yes:    <?= json_encode(__('نعم، نفّذ'), JSON_UNESCAPED_UNICODE) ?>,
+  cancel: <?= json_encode(__('إلغاء'), JSON_UNESCAPED_UNICODE) ?>
+};
+</script>
 <script src="assets/app.js?v=<?= filemtime(__DIR__ . '/../public/assets/app.js') ?>"></script>
 </body>
 </html>

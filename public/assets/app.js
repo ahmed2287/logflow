@@ -54,7 +54,56 @@
     sync();
   }
 
-  /* --- confirm destructive submits --- */
+  /* --- confirm destructive submits (in-page modal, not window.confirm) --- */
+  var I18N = window.APP_I18N || { title: 'تأكيد العملية', yes: 'نعم، نفّذ', cancel: 'إلغاء' };
+
+  function showConfirm(message, onYes) {
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    var box = document.createElement('div');
+    box.className = 'modal-box';
+
+    var head = document.createElement('h3');
+    head.textContent = '⚠️ ' + I18N.title;
+
+    var body = document.createElement('p');
+    body.textContent = message;
+
+    var actions = document.createElement('div');
+    actions.className = 'modal-actions';
+
+    var cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'btn btn-ghost';
+    cancel.textContent = I18N.cancel;
+
+    var yes = document.createElement('button');
+    yes.type = 'button';
+    yes.className = 'btn btn-danger';
+    yes.textContent = I18N.yes;
+
+    var close = function () {
+      document.removeEventListener('keydown', onKey);
+      overlay.remove();
+    };
+    var onKey = function (e) { if (e.key === 'Escape') close(); };
+
+    cancel.addEventListener('click', close);
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', onKey);
+    yes.addEventListener('click', function () { close(); onYes(); });
+
+    actions.appendChild(cancel);
+    actions.appendChild(yes);
+    box.appendChild(head);
+    box.appendChild(body);
+    box.appendChild(actions);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    cancel.focus();
+  }
+
   document.querySelectorAll('form[data-confirm]').forEach(function (f) {
     f.addEventListener('submit', function (event) {
       var message = f.getAttribute('data-confirm');
@@ -64,7 +113,8 @@
         if (n === 0) { event.preventDefault(); return; }
         message = message.replace('{n}', String(n));
       }
-      if (!window.confirm(message)) event.preventDefault();
+      event.preventDefault();
+      showConfirm(message, function () { f.submit(); });
     });
   });
 

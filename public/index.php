@@ -652,7 +652,7 @@ switch ($page) {
 
     /* --------------------------------------------------- server monitor */
     case 'server':
-        require_admin();
+        require_login();
         $psort = (string)($_GET['psort'] ?? 'cpu') === 'mem' ? 'mem' : 'cpu';
         view('server', [
             'flashes'  => flash_take(),
