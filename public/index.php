@@ -31,7 +31,7 @@ switch ($page) {
             $confirm  = (string)($_POST['confirm'] ?? '');
 
             if ($password !== $confirm) {
-                flash('error', 'كلمتا المرور غير متطابقتين.');
+                flash('error', __('كلمتا المرور غير متطابقتين.'));
                 redirect('?page=setup');
             }
             [$ok, $message] = user_create($username, $password, ROLE_ADMIN);
@@ -94,8 +94,11 @@ switch ($page) {
             'files'    => $files,
             'totals'   => log_totals($files),
             'options'  => $options,
-            'stats'    => audit_delete_stats(),
-            'recent'   => audit_read(['action' => ''], 1, 6)['rows'],
+            'sources'  => log_sources(),
+            'active'   => log_active_source(),
+            // Non-admins only ever see their own trail — on the dashboard too.
+            'stats'    => is_admin() ? audit_delete_stats() : [],
+            'recent'   => audit_read(['user' => is_admin() ? '' : current_user()['username']], 1, 6)['rows'],
         ]);
         break;
 
@@ -106,7 +109,7 @@ switch ($page) {
         $path = log_resolve($rel);
         if ($path === null) {
             http_response_code(404);
-            flash('error', 'الملف غير موجود أو غير مسموح بالوصول إليه.');
+            flash('error', __('الملف غير موجود أو غير مسموح بالوصول إليه.'));
             redirect('?page=dashboard');
         }
 
@@ -117,7 +120,7 @@ switch ($page) {
         $tail    = $tooBig ? log_tail($path, min($lines, 2000)) : log_tail($path, $lines);
         $needle  = (string)($_GET['find'] ?? '');
 
-        audit_log('view', ['file' => $rel, 'lines' => $lines]);
+        audit_log('view', ['file' => $rel, 'lines' => $lines, 'src' => log_active_source()['name'] ?? '']);
 
         view('view_log', [
             'flashes'  => flash_take(),
@@ -133,6 +136,162 @@ switch ($page) {
         ]);
         break;
 
+    /* ------------------------------------------- repeat analysis (file) */
+    case 'analyze':
+        require_login();
+        $rel  = (string)($_GET['file'] ?? '');
+        $path = log_resolve($rel);
+        if ($path === null) {
+            http_response_code(404);
+            flash('error', __('الملف غير موجود أو غير مسموح بالوصول إليه.'));
+            redirect('?page=dashboard' . src_qs());
+        }
+
+        // Full-file mode: the scan runs server-side in a detached worker (a
+        // multi-GB file can't be scanned inside one web request); this page
+        // only reads the job JSON — progress first, results when done.
+        if ((string)($_GET['full'] ?? '') === '1') {
+            $jobId = job_id('analyze', $path);
+            if (isset($_GET['restart'])) {
+                job_delete($jobId);
+                redirect('?page=analyze&file=' . urlencode($rel) . '&full=1' . src_qs());
+            }
+            $job = job_read($jobId);
+            if ($job === null) {
+                job_start([
+                    'id'          => $jobId,
+                    'type'        => 'analyze',
+                    'path'        => $path,
+                    'rel'         => $rel,
+                    'src'         => log_active_source()['name'] ?? '',
+                    'total_bytes' => (int)filesize($path),
+                ]);
+                audit_log('analyze', ['file' => $rel, 'full' => true, 'src' => log_active_source()['name'] ?? '']);
+                $job = job_read($jobId);
+            }
+            if (($job['status'] ?? '') === 'done') {
+                view('analyze', [
+                    'flashes' => flash_take(),
+                    'rel'     => $rel,
+                    'size'    => (int)filesize($path),
+                    'mtime'   => (int)filemtime($path),
+                    'mb'      => 50,
+                    'report'  => $job['result'],
+                    'full'    => true,
+                    'job'     => $job,
+                ]);
+                break;
+            }
+            view('job_progress', [
+                'flashes'  => flash_take(),
+                'rel'      => $rel,
+                'job'      => $job ?? [],
+                'stale'    => $job ? job_is_stale($job) : false,
+                'selfUrl'  => '?page=analyze&file=' . urlencode($rel) . '&full=1' . src_qs(),
+                'backUrl'  => '?page=analyze&file=' . urlencode($rel) . src_qs(),
+            ]);
+            break;
+        }
+
+        // Quick mode: scan the newest window of the file inside the request.
+        set_time_limit(300);
+        $mb     = max(10, min(2000, (int)($_GET['mb'] ?? 50)));
+        $report = log_top_repeats($path, 15, $mb * 1024 * 1024);
+        audit_log('analyze', ['file' => $rel, 'lines' => $report['total'], 'src' => log_active_source()['name'] ?? '']);
+
+        view('analyze', [
+            'flashes' => flash_take(),
+            'rel'     => $rel,
+            'size'    => (int)filesize($path),
+            'mtime'   => (int)filemtime($path),
+            'mb'      => $mb,
+            'report'  => $report,
+            'full'    => false,
+            'job'     => null,
+        ]);
+        break;
+
+    /* --------------------------------- one repeated message, in detail */
+    case 'repeat':
+        require_login();
+        $rel  = (string)($_GET['file'] ?? '');
+        $path = log_resolve($rel);
+        $key  = (string)($_GET['k'] ?? '');
+        if ($path === null || !preg_match('/^[0-9a-f]{32}$/', $key)) {
+            http_response_code(404);
+            flash('error', __('الملف غير موجود أو غير مسموح بالوصول إليه.'));
+            redirect('?page=dashboard' . src_qs());
+        }
+
+        $full = (string)($_GET['full'] ?? '') === '1';
+        $mb   = max(10, min(2000, (int)($_GET['mb'] ?? 50)));
+        $job  = null;
+
+        if ($full) {
+            // Full-file scan runs server-side in a detached worker.
+            $jobId = job_id('repeat', $path, $key);
+            if (isset($_GET['restart'])) {
+                job_delete($jobId);
+                redirect('?page=repeat&file=' . urlencode($rel) . '&k=' . $key . '&full=1' . src_qs());
+            }
+            $job = job_read($jobId);
+            if ($job === null) {
+                job_start([
+                    'id'          => $jobId,
+                    'type'        => 'repeat',
+                    'path'        => $path,
+                    'rel'         => $rel,
+                    'key'         => $key,
+                    'src'         => log_active_source()['name'] ?? '',
+                    'total_bytes' => (int)filesize($path),
+                ]);
+                $job = job_read($jobId);
+            }
+            if (($job['status'] ?? '') !== 'done') {
+                view('job_progress', [
+                    'flashes'  => flash_take(),
+                    'rel'      => $rel,
+                    'job'      => $job ?? [],
+                    'stale'    => $job ? job_is_stale($job) : false,
+                    'selfUrl'  => '?page=repeat&file=' . urlencode($rel) . '&k=' . $key . '&full=1' . src_qs(),
+                    'backUrl'  => '?page=repeat&file=' . urlencode($rel) . '&k=' . $key . src_qs(),
+                ]);
+                break;
+            }
+            $detail = $job['result'];
+        } else {
+            set_time_limit(300);
+            $detail = log_repeat_detail($path, $key, $mb * 1024 * 1024);
+        }
+
+        // Optional date range → occurrences inside it, from the per-day counts.
+        $from = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($_GET['from'] ?? '')) ? (string)$_GET['from'] : '';
+        $to   = preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($_GET['to'] ?? ''))   ? (string)$_GET['to']   : '';
+        $rangeCount = null;
+        if ($from !== '' || $to !== '') {
+            $rangeCount = 0;
+            foreach ($detail['days'] as $day => $n) {
+                if (($from === '' || $day >= $from) && ($to === '' || $day <= $to)) {
+                    $rangeCount += $n;
+                }
+            }
+        }
+
+        view('repeat', [
+            'flashes' => flash_take(),
+            'rel'     => $rel,
+            'size'    => (int)filesize($path),
+            'mb'      => $mb,
+            'key'     => $key,
+            'detail'  => $detail,
+            'from'    => $from,
+            'to'      => $to,
+            'rangeCount' => $rangeCount,
+            'full'    => $full,
+            'job'     => $job,
+        ]);
+        break;
+
     /* --------------------------------------------------------- download */
     case 'download':
         require_login();
@@ -140,9 +299,9 @@ switch ($page) {
         $path = log_resolve($rel);
         if ($path === null) {
             http_response_code(404);
-            exit('الملف غير موجود.');
+            exit(__('الملف غير موجود.'));
         }
-        audit_log('download', ['file' => $rel, 'bytes' => (int)filesize($path)]);
+        audit_log('download', ['file' => $rel, 'bytes' => (int)filesize($path), 'src' => log_active_source()['name'] ?? '']);
 
         // Force a download rather than letting the browser render log contents.
         header('Content-Type: application/octet-stream');
@@ -165,7 +324,7 @@ switch ($page) {
 
         $selected = $_POST['files'] ?? [];
         if (!is_array($selected) || !$selected) {
-            flash('error', 'لم تختر أي ملف.');
+            flash('error', __('لم تختر أي ملف.'));
             redirect('?page=dashboard');
         }
 
@@ -176,20 +335,21 @@ switch ($page) {
                 'bytes'  => $result['bytes'],
                 'files'  => array_column($result['deleted'], 'rel'),
                 'mode'   => 'manual',
+                'src'    => log_active_source()['name'] ?? '',
             ]);
             flash('success', sprintf(
-                'تم حذف %d ملف (%s).',
+                __('تم حذف %d ملف (%s).'),
                 count($result['deleted']),
                 human_bytes($result['bytes'])
             ));
         }
         if ($result['failed']) {
-            flash('error', sprintf('فشل حذف %d ملف: %s', count($result['failed']),
+            flash('error', sprintf(__('فشل حذف %d ملف: %s'), count($result['failed']),
                 implode('، ', array_map(fn($f) => $f['rel'] . ' (' . $f['reason'] . ')', $result['failed']))));
         }
         redirect('?page=dashboard');
 
-    /* ------------------------------------------- cleanup by age (days) */
+    /* ---------------------------------- cleanup: strip lines before date */
     case 'cleanup':
         require_admin();
         $status = log_dir_status();
@@ -198,65 +358,111 @@ switch ($page) {
             redirect('?page=dashboard');
         }
 
-        $days      = isset($_REQUEST['days']) && $_REQUEST['days'] !== '' ? (int)$_REQUEST['days'] : null;
+        $before    = trim((string)($_REQUEST['before'] ?? ''));   // Y-m-d from <input type=date>
+        $target    = trim((string)($_REQUEST['file'] ?? ''));     // '*' = every file, else a rel path
         $confirmed = $method === 'POST' && ($_POST['confirm'] ?? '') === 'yes';
-        $candidates = [];
-        $skipped    = [];
+        $skipped   = [];
+        $files     = log_list(['sort' => 'name', 'dir' => 'asc'], $skipped);
 
-        if ($days !== null) {
-            if ($days < 0) {
-                flash('error', 'عدد الأيام لا يمكن أن يكون سالبًا.');
-                redirect('?page=cleanup');
-            }
-            $candidates = log_older_than($days, $skipped);
+        if ($before !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $before)) {
+            flash('error', __('صيغة التاريخ غير صحيحة.'));
+            redirect('?page=cleanup' . src_qs());
         }
 
-        if ($confirmed && $days !== null) {
+        $preview = [];
+        $targets = [];
+        if ($before !== '' && $target !== '') {
+            // Scanning (and later rewriting) multi-GB logs outlasts the 30s default.
+            set_time_limit($confirmed ? 0 : 600);
+            $targets = $target === '*'
+                ? $files
+                : array_values(array_filter($files, fn($f) => $f['rel'] === $target));
+            if (!$targets) {
+                flash('error', __('الملف المطلوب غير موجود أو خارج مجلد اللوجات.'));
+                redirect('?page=cleanup' . src_qs());
+            }
+            foreach ($targets as $file) {
+                $preview[] = $file + ['scan' => log_scan_before($file['path'], $before)];
+            }
+        }
+
+        if ($confirmed && $before !== '' && $targets) {
             csrf_check();
-            // Typing the exact day count again guards against a stray click on
-            // a destructive, non-recoverable action.
-            if ((string)($_POST['days_confirm'] ?? '') !== (string)$days) {
-                flash('error', 'تأكيد عدد الأيام غير مطابق. أعد المحاولة.');
-                redirect('?page=cleanup&days=' . $days);
+            // Typing the exact date again guards against a stray click on a
+            // destructive, non-recoverable action.
+            if (trim((string)($_POST['before_confirm'] ?? '')) !== $before) {
+                flash('error', __('تأكيد التاريخ غير مطابق. أعد المحاولة.'));
+                redirect('?page=cleanup&before=' . urlencode($before) . '&file=' . urlencode($target) . src_qs());
             }
 
-            $result = log_delete(array_column($candidates, 'rel'));
+            $removedLines = 0;
+            $removedBytes = 0;
+            $touched      = [];
+            $failed       = [];
+            foreach ($preview as $file) {
+                // Nothing to strip → don't rewrite the file at all.
+                if ($file['scan']['remove'] === 0) {
+                    continue;
+                }
+                $result = log_strip_before($file['rel'], $before);
+                if (!$result['ok']) {
+                    $failed[] = $file['rel'] . ' (' . $result['reason'] . ')';
+                    continue;
+                }
+                $removedLines += $result['removed'];
+                $removedBytes += $result['bytes'];
+                $touched[]     = ['rel' => $file['rel'], 'lines' => $result['removed'], 'bytes' => $result['bytes']];
+            }
+
             audit_log('cleanup', [
-                'days'   => $days,
-                'count'  => count($result['deleted']),
-                'bytes'  => $result['bytes'],
-                'files'  => array_column($result['deleted'], 'rel'),
-                'failed' => count($result['failed']),
-                'mode'   => 'age',
+                'before' => $before,
+                'target' => $target === '*' ? 'all' : $target,
+                'lines'  => $removedLines,
+                'bytes'  => $removedBytes,
+                'files'  => array_column($touched, 'rel'),
+                'failed' => count($failed),
+                'mode'   => 'lines-before-date',
+                'src'    => log_active_source()['name'] ?? '',
             ]);
 
             flash(
-                $result['deleted'] ? 'success' : 'info',
+                $removedLines ? 'success' : 'info',
                 sprintf(
-                    'تنظيف الأقدم من %d يوم: تم حذف %d ملف (%s).%s',
-                    $days,
-                    count($result['deleted']),
-                    human_bytes($result['bytes']),
-                    $result['failed'] ? ' فشل ' . count($result['failed']) . ' ملف.' : ''
+                    __('حذف السطور الأقدم من %s: تم حذف %s سطر (%s) من %d ملف.%s'),
+                    date('d/m/Y', strtotime($before)),
+                    number_format($removedLines),
+                    human_bytes($removedBytes),
+                    count($touched),
+                    $failed ? ' ' . __('فشل:') . ' ' . implode('، ', $failed) : ''
                 )
             );
-            redirect('?page=cleanup');
+            redirect('?page=cleanup' . src_qs());
         }
 
         view('cleanup', [
-            'flashes'    => flash_take(),
-            'status'     => $status,
-            'skipped'    => $skipped,
-            'days'       => $days,
-            'candidates' => $candidates,
-            'totals'     => log_totals($candidates),
-            'allCount'   => count(log_list()),
+            'flashes' => flash_take(),
+            'status'  => $status,
+            'skipped' => $skipped,
+            'before'  => $before,
+            'target'  => $target,
+            'files'   => $files,
+            'preview' => $preview,
+            'sources' => log_sources(),
+            'active'  => log_active_source(),
         ]);
         break;
 
     /* -------------------------------------------------------- audit log */
     case 'audit':
         require_login();
+        // Two audit views: "mine" (any user, own trail only) and "all"
+        // (dashboard-wide, admins only). Admins land on "all" by default.
+        $scope = (string)($_GET['scope'] ?? (is_admin() ? 'all' : 'mine'));
+        $scope = $scope === 'all' ? 'all' : 'mine';
+        if ($scope === 'all') {
+            require_admin();
+        }
+
         $filters = [
             'user'   => (string)($_GET['user'] ?? ''),
             'action' => (string)($_GET['action'] ?? ''),
@@ -264,8 +470,7 @@ switch ($page) {
             'to'     => (string)($_GET['to'] ?? ''),
             'q'      => (string)($_GET['q'] ?? ''),
         ];
-        // Viewers only ever see their own trail; admins see everyone's.
-        if (!is_admin()) {
+        if ($scope === 'mine') {
             $filters['user'] = current_user()['username'];
         }
 
@@ -275,13 +480,14 @@ switch ($page) {
 
         view('audit', [
             'flashes' => flash_take(),
+            'scope'   => $scope,
             'rows'    => $result['rows'],
             'total'   => $result['total'],
             'page'    => $pageNum,
             'perPage' => $perPage,
             'filters' => $filters,
-            'users'   => is_admin() ? audit_users() : [current_user()['username']],
-            'stats'   => audit_delete_stats(),
+            'users'   => $scope === 'all' ? audit_users() : [current_user()['username']],
+            'stats'   => $scope === 'all' ? audit_delete_stats() : [],
         ]);
         break;
 
@@ -291,24 +497,48 @@ switch ($page) {
         if ($method === 'POST') {
             csrf_check();
             $before  = config_load();
-            $logDir  = trim((string)($_POST['log_dir'] ?? ''));
             $patterns = array_values(array_filter(array_map(
                 'trim',
                 explode(',', (string)($_POST['patterns'] ?? ''))
             )));
 
-            $errors = [];
-            if ($logDir === '') {
-                $errors[] = 'المسار مطلوب.';
-            } else {
-                $real = realpath($logDir);
-                if ($real === false || !is_dir($real)) {
-                    $errors[] = 'المسار غير موجود أو ليس مجلدًا: ' . $logDir;
-                } elseif (!is_readable($real)) {
-                    $errors[] = 'لا توجد صلاحية قراءة على: ' . $real;
-                } else {
-                    $logDir = $real;
+            $errors  = [];
+            $sources = [];
+            $seen    = [];
+            foreach ((array)($_POST['sources'] ?? []) as $row) {
+                if (!is_array($row)) {
+                    continue;
                 }
+                $name = trim((string)($row['name'] ?? ''));
+                $path = trim((string)($row['path'] ?? ''));
+                // A checked "remove" box or a fully blank row drops the source.
+                if (!empty($row['remove']) || ($name === '' && $path === '')) {
+                    continue;
+                }
+                if ($name === '' || $path === '') {
+                    $errors[] = __('كل مسار لازم يكون له اسم ومسار معًا:') . ' ' . ($name !== '' ? $name : $path);
+                    continue;
+                }
+                if (mb_strlen($name) > 40) {
+                    $errors[] = __('الاسم أطول من 40 حرفًا:') . ' ' . $name;
+                    continue;
+                }
+                $key = mb_strtolower($name);
+                if (isset($seen[$key])) {
+                    $errors[] = __('الاسم مكرر:') . ' ' . $name;
+                    continue;
+                }
+                $real = realpath($path);
+                if ($real === false || !is_dir($real)) {
+                    $errors[] = __('المسار غير موجود أو ليس مجلدًا:') . ' ' . $path;
+                    continue;
+                }
+                if (!is_readable($real)) {
+                    $errors[] = __('لا توجد صلاحية قراءة على:') . ' ' . $real;
+                    continue;
+                }
+                $seen[$key] = true;
+                $sources[]  = ['name' => $name, 'path' => $real];
             }
 
             if ($errors) {
@@ -319,7 +549,7 @@ switch ($page) {
             }
 
             $new = [
-                'log_dir'     => $logDir,
+                'sources'     => $sources,
                 'patterns'    => $patterns ?: DEFAULT_CONFIG['patterns'],
                 'recursive'   => isset($_POST['recursive']),
                 'tail_lines'  => max(10, min(20000, (int)($_POST['tail_lines'] ?? 500))),
@@ -328,9 +558,9 @@ switch ($page) {
 
             if (config_save($new)) {
                 audit_log('settings', ['before' => $before, 'after' => $new]);
-                flash('success', 'تم حفظ الإعدادات.');
+                flash('success', __('تم حفظ الإعدادات.'));
             } else {
-                flash('error', 'تعذّر كتابة ملف الإعدادات. تأكد من صلاحيات مجلد data/.');
+                flash('error', __('تعذّر كتابة ملف الإعدادات. تأكد من صلاحيات مجلد data/.'));
             }
             redirect('?page=settings');
         }
@@ -360,7 +590,7 @@ switch ($page) {
 
             } elseif ($action === 'delete') {
                 if (strcasecmp($username, $me) === 0) {
-                    flash('error', 'لا يمكنك حذف حسابك الحالي.');
+                    flash('error', __('لا يمكنك حذف حسابك الحالي.'));
                 } else {
                     [$ok, $message] = user_delete($username);
                     if ($ok) {
@@ -378,7 +608,7 @@ switch ($page) {
 
             } elseif ($action === 'role') {
                 if (strcasecmp($username, $me) === 0) {
-                    flash('error', 'لا يمكنك تغيير صلاحية حسابك الحالي.');
+                    flash('error', __('لا يمكنك تغيير صلاحية حسابك الحالي.'));
                 } else {
                     [$ok, $message] = user_set_role($username, (string)($_POST['role'] ?? ROLE_VIEWER));
                     if ($ok) {
@@ -405,9 +635,9 @@ switch ($page) {
 
             $stored = user_find($me);
             if (!$stored || !password_verify($current, (string)$stored['password'])) {
-                flash('error', 'كلمة المرور الحالية غير صحيحة.');
+                flash('error', __('كلمة المرور الحالية غير صحيحة.'));
             } elseif ($new !== $confirm) {
-                flash('error', 'كلمتا المرور الجديدتان غير متطابقتين.');
+                flash('error', __('كلمتا المرور الجديدتان غير متطابقتين.'));
             } else {
                 [$ok, $message] = user_set_password($me, $new);
                 if ($ok) {
@@ -420,9 +650,42 @@ switch ($page) {
         view('account', ['flashes' => flash_take(), 'me' => current_user()]);
         break;
 
+    /* --------------------------------------------------- server monitor */
+    case 'server':
+        require_admin();
+        $psort = (string)($_GET['psort'] ?? 'cpu') === 'mem' ? 'mem' : 'cpu';
+        view('server', [
+            'flashes'  => flash_take(),
+            'hostname' => php_uname('n'),
+            'load'     => sys_load(),
+            'cpu'      => sys_cpu_usage(),
+            'memory'   => sys_memory(),
+            'uptime'   => sys_uptime(),
+            'disks'    => sys_disks(),
+            'procs'    => sys_processes($psort),
+            'nproc'    => sys_process_count(),
+            'psort'    => $psort,
+            'auto'     => (string)($_GET['auto'] ?? '') === '1',
+        ]);
+        break;
+
+    /* --------------------------------------------------------- language */
+    case 'lang':
+        $to = (string)($_GET['to'] ?? '');
+        if (in_array($to, APP_LANGS, true)) {
+            setcookie('almasrylog_lang', $to, [
+                'expires'  => time() + 31536000,
+                'path'     => '/',
+                'samesite' => 'Lax',
+            ]);
+        }
+        // Bounce back to where the switch was clicked (same-app query only).
+        $backQuery = (string)parse_url((string)($_SERVER['HTTP_REFERER'] ?? ''), PHP_URL_QUERY);
+        redirect($backQuery !== '' ? '?' . $backQuery : '?page=dashboard');
+
     default:
         http_response_code(404);
         require_login();
-        flash('error', 'الصفحة غير موجودة.');
+        flash('error', __('الصفحة غير موجودة.'));
         redirect('?page=dashboard');
 }

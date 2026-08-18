@@ -22,7 +22,7 @@ if (!is_dir(DATA_PATH)) {
 /* ---------------------------------------------------------------- config */
 
 const DEFAULT_CONFIG = [
-    'log_dir'      => '',
+    'sources'      => [],            // [{name: "...", path: "/abs/dir"}, ...]
     'patterns'     => ['*.log', '*.txt'],
     'recursive'    => true,
     'tail_lines'   => 500,
@@ -38,7 +38,16 @@ function config_load(): array
     if (!is_array($raw)) {
         return DEFAULT_CONFIG;
     }
-    return array_merge(DEFAULT_CONFIG, $raw);
+    $config = array_merge(DEFAULT_CONFIG, $raw);
+    // Migrate the pre-multi-source shape: a single log_dir string becomes one
+    // named source, so existing installs keep working untouched.
+    if (!$config['sources'] && !empty($raw['log_dir'])) {
+        $config['sources'] = [[
+            'name' => basename((string)$raw['log_dir']) ?: 'اللوجات',
+            'path' => (string)$raw['log_dir'],
+        ]];
+    }
+    return $config;
 }
 
 function config_save(array $config): bool
@@ -156,6 +165,9 @@ function view(string $name, array $data = []): void
     require VIEWS_PATH . '/' . $name . '.php';
 }
 
+require_once __DIR__ . '/i18n.php';
+require_once __DIR__ . '/jobs.php';
+require_once __DIR__ . '/sysinfo.php';
 require_once BASE_PATH . '/views/_helpers.php';
 require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/audit.php';

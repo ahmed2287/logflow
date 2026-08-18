@@ -9,8 +9,9 @@ declare(strict_types=1);
  *   php cli/manage.php add <username> <password> [admin|viewer]
  *   php cli/manage.php passwd <username> <password>
  *   php cli/manage.php delete <username>
- *   php cli/manage.php set-dir /var/log/myapp
- *   php cli/manage.php cleanup <days> [--dry-run]
+ *   php cli/manage.php set-dir /var/log/myapp [name]   (upsert a named source)
+ *   php cli/manage.php sources
+ *   php cli/manage.php cleanup <days> [--dry-run] [--src=<name>]
  *   php cli/manage.php audit [count]
  */
 
@@ -79,52 +80,99 @@ switch ($command) {
         break;
 
     case 'set-dir':
-        $dir  = $argv[2] ?? fail('Usage: set-dir <absolute-path>');
+        $dir  = $argv[2] ?? fail('Usage: set-dir <absolute-path> [name]');
+        $name = trim((string)($argv[3] ?? ''));
         $real = realpath($dir);
         if ($real === false || !is_dir($real)) {
             fail('✗ Not a directory: ' . $dir);
         }
-        $config = config_load();
-        $before = $config;
-        $config['log_dir'] = $real;
+        if ($name === '') {
+            $name = basename($real) ?: 'اللوجات';
+        }
+        $config  = config_load();
+        $before  = $config;
+        // Upsert by name: same name updates its path, a new name is appended.
+        $sources = array_values(array_filter(
+            (array)$config['sources'],
+            fn($s) => strcasecmp((string)($s['name'] ?? ''), $name) !== 0
+        ));
+        $sources[] = ['name' => $name, 'path' => $real];
+        $config['sources'] = $sources;
         if (!config_save($config)) {
             fail('✗ Could not write ' . CONFIG_FILE);
         }
         audit_log('settings', ['before' => $before, 'after' => $config, 'via' => 'cli'], 'cli');
-        out('✓ log_dir = ' . $real);
+        out('✓ source "' . $name . '" = ' . $real . '  (' . count($sources) . ' source(s) total)');
         out('  readable: ' . (is_readable($real) ? 'yes' : 'NO') . ', writable: ' . (is_writable($real) ? 'yes' : 'NO'));
         break;
 
-    case 'cleanup':
-        $days = isset($argv[2]) ? (int)$argv[2] : fail('Usage: cleanup <days> [--dry-run]');
-        $dry  = in_array('--dry-run', $argv, true);
-        $status = log_dir_status();
-        if (!$status['ok']) {
-            fail('✗ ' . $status['message']);
-        }
-
-        $candidates = log_older_than($days);
-        $totals     = log_totals($candidates);
-        out(sprintf('%s %d file(s), %s older than %d day(s):',
-            $dry ? '[dry-run] would delete' : 'deleting', $totals['count'], human_bytes($totals['bytes']), $days));
-        foreach ($candidates as $file) {
-            out('  ' . str_pad(human_bytes($file['size']), 10) . $file['age_days'] . 'd  ' . $file['rel']);
-        }
-        if ($dry || !$candidates) {
+    case 'sources':
+        $sources = log_sources();
+        if (!$sources) {
+            out('No sources configured. Add one:  php cli/manage.php set-dir /var/log/myapp myapp');
             break;
         }
+        foreach ($sources as $source) {
+            $real = realpath($source['path']);
+            $ok   = $real !== false && is_dir($real) && is_readable($real);
+            out(str_pad($source['name'], 24) . str_pad($ok ? 'ok' : 'INVALID', 10) . $source['path']);
+        }
+        break;
 
-        $result = log_delete(array_column($candidates, 'rel'));
-        audit_log('cleanup', [
-            'days'  => $days,
-            'count' => count($result['deleted']),
-            'bytes' => $result['bytes'],
-            'files' => array_column($result['deleted'], 'rel'),
-            'via'   => 'cli',
-        ], 'cli');
-        out(sprintf('✓ deleted %d file(s), freed %s%s',
-            count($result['deleted']), human_bytes($result['bytes']),
-            $result['failed'] ? ', ' . count($result['failed']) . ' failed' : ''));
+    case 'cleanup':
+        $days = isset($argv[2]) ? (int)$argv[2] : fail('Usage: cleanup <days> [--dry-run] [--src=<name>]');
+        $dry  = in_array('--dry-run', $argv, true);
+        $only = null;
+        foreach ($argv as $arg) {
+            if (str_starts_with((string)$arg, '--src=')) {
+                $only = substr((string)$arg, 6);
+            }
+        }
+
+        $sources = log_sources();
+        if (!$sources) {
+            fail('✗ No sources configured.');
+        }
+        if ($only !== null) {
+            $sources = array_values(array_filter($sources, fn($s) => $s['name'] === $only));
+            if (!$sources) {
+                fail('✗ Unknown source: ' . $only);
+            }
+        }
+
+        foreach ($sources as $source) {
+            log_source_select($source['name'], true);
+            out('== ' . $source['name'] . ' (' . $source['path'] . ')');
+            $status = log_dir_status();
+            if (!$status['ok']) {
+                out('  ✗ ' . $status['message']);
+                continue;
+            }
+
+            $candidates = log_older_than($days);
+            $totals     = log_totals($candidates);
+            out(sprintf('  %s %d file(s), %s older than %d day(s):',
+                $dry ? '[dry-run] would delete' : 'deleting', $totals['count'], human_bytes($totals['bytes']), $days));
+            foreach ($candidates as $file) {
+                out('    ' . str_pad(human_bytes($file['size']), 10) . $file['age_days'] . 'd  ' . $file['rel']);
+            }
+            if ($dry || !$candidates) {
+                continue;
+            }
+
+            $result = log_delete(array_column($candidates, 'rel'));
+            audit_log('cleanup', [
+                'days'  => $days,
+                'count' => count($result['deleted']),
+                'bytes' => $result['bytes'],
+                'files' => array_column($result['deleted'], 'rel'),
+                'src'   => $source['name'],
+                'via'   => 'cli',
+            ], 'cli');
+            out(sprintf('  ✓ deleted %d file(s), freed %s%s',
+                count($result['deleted']), human_bytes($result['bytes']),
+                $result['failed'] ? ', ' . count($result['failed']) . ' failed' : ''));
+        }
         break;
 
     case 'audit':
@@ -145,5 +193,5 @@ switch ($command) {
     default:
         out(trim((string)file_get_contents(__FILE__, false, null, 0, 900)));
         out();
-        out('Commands: users | add | passwd | delete | set-dir | cleanup | audit');
+        out('Commands: users | add | passwd | delete | set-dir | sources | cleanup | audit');
 }

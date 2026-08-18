@@ -62,9 +62,29 @@
       if (f.id === 'bulk-form') {
         var n = f.querySelectorAll('.row-check:checked').length;
         if (n === 0) { event.preventDefault(); return; }
-        message = message.replace('الملفات المختارة', n + ' ملف');
+        message = message.replace('{n}', String(n));
       }
       if (!window.confirm(message)) event.preventDefault();
     });
   });
+
+  /* --- light/dark toggle (manual choice beats the system preference) --- */
+  var themeBtn = document.getElementById('theme-toggle');
+  if (themeBtn) {
+    var effectiveTheme = function () {
+      return document.documentElement.dataset.theme
+        || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    };
+    // Show the mode the click switches TO: a sun while dark, a moon while light.
+    var paintIcon = function () {
+      themeBtn.textContent = effectiveTheme() === 'dark' ? '☀️' : '🌙';
+    };
+    themeBtn.addEventListener('click', function () {
+      var next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      try { localStorage.setItem('almasrylog_theme', next); } catch (e) {}
+      paintIcon();
+    });
+    paintIcon();
+  }
 })();

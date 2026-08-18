@@ -37,16 +37,16 @@ function user_create(string $username, string $password, string $role = ROLE_VIE
 {
     $username = trim($username);
     if ($username === '' || !preg_match('/^[A-Za-z0-9._-]{3,32}$/', $username)) {
-        return [false, 'اسم المستخدم يجب أن يكون 3-32 حرفًا (حروف إنجليزية، أرقام، . _ -).'];
+        return [false, __('اسم المستخدم يجب أن يكون 3-32 حرفًا (حروف إنجليزية، أرقام، . _ -).')];
     }
     if (mb_strlen($password) < 8) {
-        return [false, 'كلمة المرور يجب أن تكون 8 أحرف على الأقل.'];
+        return [false, __('كلمة المرور يجب أن تكون 8 أحرف على الأقل.')];
     }
     if (!isset(ROLES[$role])) {
-        return [false, 'صلاحية غير معروفة.'];
+        return [false, __('صلاحية غير معروفة.')];
     }
     if (user_find($username) !== null) {
-        return [false, 'اسم المستخدم موجود بالفعل.'];
+        return [false, __('اسم المستخدم موجود بالفعل.')];
     }
 
     $users   = users_all();
@@ -58,9 +58,9 @@ function user_create(string $username, string $password, string $role = ROLE_VIE
         'last_login' => null,
     ];
     if (!users_save($users)) {
-        return [false, 'تعذّر حفظ ملف المستخدمين.'];
+        return [false, __('تعذّر حفظ ملف المستخدمين.')];
     }
-    return [true, 'تم إنشاء المستخدم.'];
+    return [true, __('تم إنشاء المستخدم.')];
 }
 
 function user_delete(string $username): array
@@ -72,22 +72,22 @@ function user_delete(string $username): array
     ));
 
     if (count($kept) === count($users)) {
-        return [false, 'المستخدم غير موجود.'];
+        return [false, __('المستخدم غير موجود.')];
     }
     $admins = array_filter($kept, fn($u) => ($u['role'] ?? '') === ROLE_ADMIN);
     if (!$admins) {
-        return [false, 'لا يمكن حذف آخر مدير في النظام.'];
+        return [false, __('لا يمكن حذف آخر مدير في النظام.')];
     }
     if (!users_save($kept)) {
-        return [false, 'تعذّر حفظ ملف المستخدمين.'];
+        return [false, __('تعذّر حفظ ملف المستخدمين.')];
     }
-    return [true, 'تم حذف المستخدم.'];
+    return [true, __('تم حذف المستخدم.')];
 }
 
 function user_set_password(string $username, string $password): array
 {
     if (mb_strlen($password) < 8) {
-        return [false, 'كلمة المرور يجب أن تكون 8 أحرف على الأقل.'];
+        return [false, __('كلمة المرور يجب أن تكون 8 أحرف على الأقل.')];
     }
     $users = users_all();
     $found = false;
@@ -101,18 +101,18 @@ function user_set_password(string $username, string $password): array
     unset($user);
 
     if (!$found) {
-        return [false, 'المستخدم غير موجود.'];
+        return [false, __('المستخدم غير موجود.')];
     }
     if (!users_save($users)) {
-        return [false, 'تعذّر حفظ ملف المستخدمين.'];
+        return [false, __('تعذّر حفظ ملف المستخدمين.')];
     }
-    return [true, 'تم تغيير كلمة المرور.'];
+    return [true, __('تم تغيير كلمة المرور.')];
 }
 
 function user_set_role(string $username, string $role): array
 {
     if (!isset(ROLES[$role])) {
-        return [false, 'صلاحية غير معروفة.'];
+        return [false, __('صلاحية غير معروفة.')];
     }
     $users = users_all();
     foreach ($users as &$user) {
@@ -124,12 +124,12 @@ function user_set_role(string $username, string $role): array
 
     $admins = array_filter($users, fn($u) => ($u['role'] ?? '') === ROLE_ADMIN);
     if (!$admins) {
-        return [false, 'لا بد من وجود مدير واحد على الأقل.'];
+        return [false, __('لا بد من وجود مدير واحد على الأقل.')];
     }
     if (!users_save($users)) {
-        return [false, 'تعذّر حفظ ملف المستخدمين.'];
+        return [false, __('تعذّر حفظ ملف المستخدمين.')];
     }
-    return [true, 'تم تحديث الصلاحية.'];
+    return [true, __('تم تحديث الصلاحية.')];
 }
 
 /* ----------------------------------------------------------------- login */
@@ -153,7 +153,7 @@ function login_attempt(string $username, string $password): array
             $_SESSION['login_attempts'] = 0;
         }
         audit_log('login_failed', ['username' => $username], $username !== '' ? $username : 'anonymous');
-        return [false, 'اسم المستخدم أو كلمة المرور غير صحيحة.'];
+        return [false, __('اسم المستخدم أو كلمة المرور غير صحيحة.')];
     }
 
     unset($_SESSION['login_attempts'], $_SESSION['lockout_until']);
@@ -175,7 +175,7 @@ function login_attempt(string $username, string $password): array
     users_save($users);
 
     audit_log('login', [], $user['username']);
-    return [true, 'مرحبًا ' . $user['username']];
+    return [true, __('مرحبًا') . ' ' . $user['username']];
 }
 
 function login_locked_out(): bool
@@ -219,7 +219,7 @@ function require_admin(): void
     require_login();
     if (!is_admin()) {
         http_response_code(403);
-        flash('error', 'هذه الصفحة متاحة للمديرين فقط.');
+        flash('error', __('هذه الصفحة متاحة للمديرين فقط.'));
         redirect('?page=dashboard');
     }
 }

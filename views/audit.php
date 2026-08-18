@@ -2,27 +2,27 @@
 
 <div class="page-head">
   <div>
-    <h1>سجل النشاط</h1>
+    <h1><?= $scope === 'mine' ? '🙋 ' . __('سجل نشاطي') : '🕵️ ' . __('سجل نشاط اللوحة') ?></h1>
     <p class="muted">
-      <?= is_admin() ? 'كل عمليات المستخدمين — من فعل ماذا ومتى.' : 'سجل نشاطك الشخصي.' ?>
-      إجمالي <strong><?= number_format($total) ?></strong> عملية.
+      <?= $scope === 'mine' ? __('سجل نشاطك الشخصي.') : __('كل عمليات المستخدمين — من فعل ماذا ومتى.') ?>
+      <?= __('إجمالي') ?> <strong><?= number_format($total) ?></strong> <?= __('عملية.') ?>
     </p>
   </div>
-  <a class="btn btn-ghost" href="?page=dashboard">← رجوع</a>
+  <a class="btn btn-ghost" href="?page=dashboard">← <?= __('رجوع') ?></a>
 </div>
 
-<?php if (is_admin() && $stats): ?>
+<?php if ($scope === 'all' && $stats): ?>
   <section class="section">
-    <h2 class="section-title">ملخص الحذف لكل مستخدم</h2>
+    <h2 class="section-title"><?= __('ملخص الحذف لكل مستخدم') ?></h2>
     <div class="table-wrap">
       <table class="table">
         <thead>
           <tr>
-            <th>المستخدم</th>
-            <th class="col-num">ملفات محذوفة</th>
-            <th class="col-num">حجم محرَّر</th>
-            <th class="col-num">عمليات</th>
-            <th class="col-date">آخر عملية</th>
+            <th><?= __('المستخدم') ?></th>
+            <th class="col-num"><?= __('ملفات محذوفة') ?></th>
+            <th class="col-num"><?= __('حجم محرَّر') ?></th>
+            <th class="col-num"><?= __('عمليات') ?></th>
+            <th class="col-date"><?= __('آخر عملية') ?></th>
             <th class="col-actions"></th>
           </tr>
         </thead>
@@ -37,7 +37,7 @@
                 <?= $stat['last'] ? date('Y-m-d H:i', strtotime($stat['last'])) : '—' ?>
               </td>
               <td class="col-actions">
-                <a class="btn btn-ghost btn-sm" href="?page=audit&amp;user=<?= urlencode($username) ?>&amp;action=delete_file">تفاصيل</a>
+                <a class="btn btn-ghost btn-sm" href="?page=audit&amp;scope=all&amp;user=<?= urlencode($username) ?>&amp;action=delete_file"><?= __('تفاصيل') ?></a>
               </td>
             </tr>
           <?php endforeach; ?>
@@ -49,42 +49,43 @@
 
 <form class="toolbar" method="get" action="">
   <input type="hidden" name="page" value="audit">
-  <?php if (is_admin()): ?>
+  <input type="hidden" name="scope" value="<?= e($scope) ?>">
+  <?php if ($scope === 'all'): ?>
     <select name="user">
-      <option value="">كل المستخدمين</option>
+      <option value=""><?= __('كل المستخدمين') ?></option>
       <?php foreach ($users as $username): ?>
         <option value="<?= e($username) ?>" <?= $filters['user'] === $username ? 'selected' : '' ?>><?= e($username) ?></option>
       <?php endforeach; ?>
     </select>
   <?php endif; ?>
   <select name="action">
-    <option value="">كل الإجراءات</option>
+    <option value=""><?= __('كل الإجراءات') ?></option>
     <?php foreach (AUDIT_ACTIONS as $key => $label): ?>
-      <option value="<?= e($key) ?>" <?= $filters['action'] === $key ? 'selected' : '' ?>><?= e($label) ?></option>
+      <option value="<?= e($key) ?>" <?= $filters['action'] === $key ? 'selected' : '' ?>><?= e(__($label)) ?></option>
     <?php endforeach; ?>
   </select>
-  <label class="toolbar-field"><span>من</span><input type="date" name="from" value="<?= e($filters['from']) ?>"></label>
-  <label class="toolbar-field"><span>إلى</span><input type="date" name="to" value="<?= e($filters['to']) ?>"></label>
-  <input class="input-search" type="search" name="q" value="<?= e($filters['q']) ?>" placeholder="ابحث في التفاصيل…">
-  <button class="btn btn-ghost" type="submit">تصفية</button>
-  <a class="btn btn-ghost" href="?page=audit">مسح</a>
+  <label class="toolbar-field"><span><?= __('من') ?></span><input type="date" name="from" value="<?= e($filters['from']) ?>"></label>
+  <label class="toolbar-field"><span><?= __('إلى') ?></span><input type="date" name="to" value="<?= e($filters['to']) ?>"></label>
+  <input class="input-search" type="search" name="q" value="<?= e($filters['q']) ?>" placeholder="<?= e(__('ابحث في التفاصيل…')) ?>">
+  <button class="btn btn-ghost" type="submit"><?= __('تصفية') ?></button>
+  <a class="btn btn-ghost" href="?page=audit&amp;scope=<?= e($scope) ?>"><?= __('مسح') ?></a>
 </form>
 
 <?php if (!$rows): ?>
   <div class="empty">
     <div class="empty-mark">🗒️</div>
-    <h2>لا توجد سجلات مطابقة</h2>
-    <p class="muted">جرّب توسيع نطاق التصفية.</p>
+    <h2><?= __('لا توجد سجلات مطابقة') ?></h2>
+    <p class="muted"><?= __('جرّب توسيع نطاق التصفية.') ?></p>
   </div>
 <?php else: ?>
   <div class="table-wrap">
     <table class="table">
       <thead>
         <tr>
-          <th class="col-date">الوقت</th>
-          <th>المستخدم</th>
-          <th>الإجراء</th>
-          <th>التفاصيل</th>
+          <th class="col-date"><?= __('الوقت') ?></th>
+          <th><?= __('المستخدم') ?></th>
+          <th><?= __('الإجراء') ?></th>
+          <th><?= __('التفاصيل') ?></th>
           <th class="col-ip">IP</th>
         </tr>
       </thead>
@@ -101,42 +102,46 @@
               <?= e(date('Y-m-d H:i:s', strtotime((string)($row['ts'] ?? 'now')))) ?>
             </td>
             <td><strong><?= e((string)($row['user'] ?? '—')) ?></strong></td>
-            <td><span class="tag tag-<?= e($action) ?>"><?= e(AUDIT_ACTIONS[$action] ?? $action) ?></span></td>
+            <td><span class="tag tag-<?= e($action) ?>"><?= e(__(AUDIT_ACTIONS[$action] ?? $action)) ?></span></td>
             <td class="col-details">
-              <?php if ($action === 'cleanup'): ?>
-                أقدم من <strong><?= (int)($details['days'] ?? 0) ?></strong> يوم —
-                حذف <strong><?= (int)($details['count'] ?? 0) ?></strong> ملف
+              <?php if ($action === 'cleanup' && isset($details['before'])): ?>
+                <?= __('حذف السطور الأقدم من') ?> <strong class="ltr"><?= e((string)$details['before']) ?></strong> —
+                <strong><?= number_format((int)($details['lines'] ?? 0)) ?></strong> <?= __('سطر') ?>
+                (<?= bytes_html((int)($details['bytes'] ?? 0)) ?>)
+              <?php elseif ($action === 'cleanup'): ?>
+                <?= __('أقدم من') ?> <strong><?= (int)($details['days'] ?? 0) ?></strong> <?= __('يوم') ?> —
+                <?= __('حذف') ?> <strong><?= (int)($details['count'] ?? 0) ?></strong> <?= __('ملف') ?>
                 (<?= bytes_html((int)($details['bytes'] ?? 0)) ?>)
               <?php elseif ($action === 'delete_file'): ?>
-                حذف <strong><?= (int)($details['count'] ?? 0) ?></strong> ملف
+                <?= __('حذف') ?> <strong><?= (int)($details['count'] ?? 0) ?></strong> <?= __('ملف') ?>
                 (<?= bytes_html((int)($details['bytes'] ?? 0)) ?>)
               <?php elseif (!empty($details['file'])): ?>
                 <span class="mono ltr trunc"><?= e((string)$details['file']) ?></span>
               <?php elseif (!empty($details['username'])): ?>
                 <span class="mono ltr"><?= e((string)$details['username']) ?></span>
-                <?= !empty($details['role']) ? '(' . e(ROLES[$details['role']] ?? $details['role']) . ')' : '' ?>
+                <?= !empty($details['role']) ? '(' . e(__(ROLES[$details['role']] ?? $details['role'])) . ')' : '' ?>
               <?php elseif ($action === 'settings'): ?>
-                <span class="muted">تعديل إعدادات اللوحة</span>
+                <span class="muted"><?= __('تعديل إعدادات اللوحة') ?></span>
               <?php else: ?>
                 <span class="muted">—</span>
               <?php endif; ?>
 
+              <?php if (!empty($details['src'])): ?>
+                <span class="tag">📁 <?= e((string)$details['src']) ?></span>
+              <?php endif; ?>
+
               <?php if (!empty($details['files']) && is_array($details['files'])): ?>
                 <details class="files-details">
-                  <summary>عرض الملفات (<?= count($details['files']) ?>)</summary>
+                  <summary><?= __('عرض الملفات') ?> (<?= count($details['files']) ?>)</summary>
                   <ul class="file-list mono ltr">
                     <?php foreach (array_slice($details['files'], 0, 500) as $file): ?>
                       <li><?= e((string)$file) ?></li>
                     <?php endforeach; ?>
                     <?php if (count($details['files']) > 500): ?>
-                      <li class="muted">… و<?= count($details['files']) - 500 ?> ملف آخر</li>
+                      <li class="muted">… +<?= count($details['files']) - 500 ?></li>
                     <?php endif; ?>
                   </ul>
                 </details>
-              <?php endif; ?>
-
-              <?php if ($action === 'settings' && !empty($details['after']['log_dir'])): ?>
-                <div class="muted small mono ltr">→ <?= e((string)$details['after']['log_dir']) ?></div>
               <?php endif; ?>
             </td>
             <td class="col-ip mono ltr muted"><?= e((string)($row['ip'] ?? '—')) ?></td>
@@ -153,14 +158,14 @@
   ?>
     <nav class="pager">
       <?php if ($page > 1): $query['p'] = $page - 1; ?>
-        <a class="btn btn-ghost btn-sm" href="?<?= e(http_build_query($query)) ?>">→ السابق</a>
+        <a class="btn btn-ghost btn-sm" href="?<?= e(http_build_query($query)) ?>"><?= __('السابق') ?></a>
       <?php endif; ?>
-      <span class="muted">صفحة <?= $page ?> من <?= $pages ?></span>
+      <span class="muted"><?= __('صفحة') ?> <?= $page ?> <?= __('من') ?> <?= $pages ?></span>
       <?php if ($page < $pages): $query['p'] = $page + 1; ?>
-        <a class="btn btn-ghost btn-sm" href="?<?= e(http_build_query($query)) ?>">التالي ←</a>
+        <a class="btn btn-ghost btn-sm" href="?<?= e(http_build_query($query)) ?>"><?= __('التالي') ?></a>
       <?php endif; ?>
     </nav>
   <?php endif; ?>
 <?php endif; ?>
 
-<?php layout_end('سجل النشاط', $flashes); ?>
+<?php layout_end($scope === 'mine' ? 'سجل نشاطي' : 'سجل نشاط اللوحة', $flashes); ?>
