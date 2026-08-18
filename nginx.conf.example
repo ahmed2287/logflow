@@ -7,7 +7,7 @@ server {
 
     # Docroot is public/ on purpose: data/ (users.json, audit.log), src/,
     # views/ and cli/ sit one level up and are unreachable over HTTP.
-    root /home/hamdy/almasrylog/public;
+    root /var/www/html/log-manager/public;
     index index.php;
 
     # Single front controller — every route is ?page=... on index.php.

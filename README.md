@@ -38,6 +38,7 @@
 
 | | |
 |---|---|
+| مجلد المشروع | `/var/www/html/log-manager` |
 | كونفج nginx | `/etc/nginx/sites-available/local-almasrylog.conf` (نسخة منه في `nginx.conf.example`) |
 | مُفعَّل عن طريق | symlink في `/etc/nginx/sites-enabled/` |
 | الدومين | `almasrylog.test` → سطر في `/etc/hosts` |
