@@ -168,6 +168,7 @@ function view(string $name, array $data = []): void
 require_once __DIR__ . '/i18n.php';
 require_once __DIR__ . '/jobs.php';
 require_once __DIR__ . '/sysinfo.php';
+require_once __DIR__ . '/requests.php';
 require_once BASE_PATH . '/views/_helpers.php';
 require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/audit.php';

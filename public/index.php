@@ -351,7 +351,99 @@ switch ($page) {
 
     /* ---------------------------------- cleanup: strip lines before date */
     case 'cleanup':
-        require_admin();
+        // Viewers run the same cycle; their confirmed action becomes a
+        // pending request that an admin approves (executes) or rejects.
+        require_login();
+
+        /* -- admin decides on a viewer's request -- */
+        if ($method === 'POST' && isset($_POST['request_action'])) {
+            require_admin();
+            csrf_check();
+            $reqId  = (string)($_POST['request_id'] ?? '');
+            $reqRow = request_find($reqId);
+            if ($reqRow === null || ($reqRow['status'] ?? '') !== 'pending') {
+                flash('error', __('الطلب غير موجود أو تم البتّ فيه بالفعل.'));
+                redirect('?page=cleanup' . src_qs());
+            }
+            $me = current_user()['username'];
+
+            if ($_POST['request_action'] === 'reject') {
+                request_update($reqId, ['status' => 'rejected', 'decided_by' => $me, 'decided_at' => date('c')]);
+                audit_log('cleanup_reject', [
+                    'request' => $reqId,
+                    'user'    => $reqRow['user'],
+                    'before'  => $reqRow['before'],
+                    'target'  => $reqRow['target'],
+                    'src'     => $reqRow['src'],
+                ]);
+                flash('info', sprintf(__('تم رفض طلب التنظيف المقدم من %s.'), $reqRow['user']));
+                redirect('?page=cleanup' . src_qs());
+            }
+
+            // Approve: pin the request's source and execute with its parameters.
+            log_source_select((string)$reqRow['src'] ?: null, true);
+            $reqStatus = log_dir_status();
+            if (!$reqStatus['ok']) {
+                flash('error', $reqStatus['message']);
+                redirect('?page=cleanup' . src_qs());
+            }
+            set_time_limit(0);
+            $reqFiles   = log_list(['sort' => 'name', 'dir' => 'asc']);
+            $reqTargets = $reqRow['target'] === '*'
+                ? $reqFiles
+                : array_values(array_filter($reqFiles, fn($f) => $f['rel'] === $reqRow['target']));
+
+            $removedLines = 0;
+            $removedBytes = 0;
+            $touched      = [];
+            $failed       = [];
+            foreach ($reqTargets as $file) {
+                $result = log_strip_before($file['rel'], (string)$reqRow['before']);
+                if (!$result['ok']) {
+                    $failed[] = $file['rel'] . ' (' . $result['reason'] . ')';
+                    continue;
+                }
+                if ($result['removed'] === 0) {
+                    continue;
+                }
+                $removedLines += $result['removed'];
+                $removedBytes += $result['bytes'];
+                $touched[]     = $file['rel'];
+            }
+
+            request_update($reqId, [
+                'status'     => 'approved',
+                'decided_by' => $me,
+                'decided_at' => date('c'),
+                'result'     => ['lines' => $removedLines, 'bytes' => $removedBytes, 'files' => count($touched)],
+            ]);
+            audit_log('cleanup', [
+                'before'       => $reqRow['before'],
+                'target'       => $reqRow['target'] === '*' ? 'all' : $reqRow['target'],
+                'lines'        => $removedLines,
+                'bytes'        => $removedBytes,
+                'files'        => $touched,
+                'failed'       => count($failed),
+                'mode'         => 'lines-before-date',
+                'src'          => $reqRow['src'],
+                'requested_by' => $reqRow['user'],
+                'approved_by'  => $me,
+            ]);
+            flash(
+                $removedLines ? 'success' : 'info',
+                sprintf(
+                    __('تمت الموافقة على طلب %s: حذف %s سطر (%s) من %d ملف.%s'),
+                    $reqRow['user'],
+                    number_format($removedLines),
+                    human_bytes($removedBytes),
+                    count($touched),
+                    $failed ? ' ' . __('فشل:') . ' ' . implode('، ', $failed) : ''
+                )
+            );
+            log_source_select(null, true);
+            redirect('?page=cleanup' . src_qs());
+        }
+
         $status = log_dir_status();
         if (!$status['ok']) {
             flash('error', $status['message']);
@@ -393,6 +485,32 @@ switch ($page) {
             if (trim((string)($_POST['before_confirm'] ?? '')) !== $before) {
                 flash('error', __('تأكيد التاريخ غير مطابق. أعد المحاولة.'));
                 redirect('?page=cleanup&before=' . urlencode($before) . '&file=' . urlencode($target) . src_qs());
+            }
+
+            // Viewers don't execute — their confirmed cycle becomes a request.
+            if (!is_admin()) {
+                $totalRemove = array_sum(array_map(fn($f) => $f['scan']['remove'], $preview));
+                $totalBytes  = array_sum(array_map(fn($f) => $f['scan']['bytes'], $preview));
+                request_add([
+                    'user'    => current_user()['username'],
+                    'src'     => log_active_source()['name'] ?? '',
+                    'before'  => $before,
+                    'target'  => $target,
+                    'preview' => [
+                        'lines' => $totalRemove,
+                        'bytes' => $totalBytes,
+                        'files' => count(array_filter($preview, fn($f) => $f['scan']['remove'] > 0)),
+                    ],
+                ]);
+                audit_log('cleanup_request', [
+                    'before' => $before,
+                    'target' => $target === '*' ? 'all' : $target,
+                    'lines'  => $totalRemove,
+                    'bytes'  => $totalBytes,
+                    'src'    => log_active_source()['name'] ?? '',
+                ]);
+                flash('success', __('تم إرسال طلب التنظيف للمدير — سيتم التنفيذ بعد موافقته.'));
+                redirect('?page=cleanup' . src_qs());
             }
 
             $removedLines = 0;
@@ -440,15 +558,17 @@ switch ($page) {
         }
 
         view('cleanup', [
-            'flashes' => flash_take(),
-            'status'  => $status,
-            'skipped' => $skipped,
-            'before'  => $before,
-            'target'  => $target,
-            'files'   => $files,
-            'preview' => $preview,
-            'sources' => log_sources(),
-            'active'  => log_active_source(),
+            'flashes'    => flash_take(),
+            'status'     => $status,
+            'skipped'    => $skipped,
+            'before'     => $before,
+            'target'     => $target,
+            'files'      => $files,
+            'preview'    => $preview,
+            'sources'    => log_sources(),
+            'active'     => log_active_source(),
+            'pending'    => is_admin() ? requests_pending() : [],
+            'myRequests' => is_admin() ? [] : requests_by_user(current_user()['username']),
         ]);
         break;
 

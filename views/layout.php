@@ -12,7 +12,8 @@ $auditScope = $current === 'audit'
     : '';
 $nav = [
     ['href' => '?page=dashboard',        'label' => 'اللوجات',          'icon' => '📄', 'admin' => false, 'active' => $current === 'dashboard'],
-    ['href' => '?page=cleanup',          'label' => 'تنظيف',            'icon' => '🧹', 'admin' => true,  'active' => $current === 'cleanup'],
+    ['href' => '?page=cleanup',          'label' => 'تنظيف',            'icon' => '🧹', 'admin' => false, 'active' => $current === 'cleanup',
+     'badge' => ($user && is_admin()) ? requests_pending_count() : 0],
     ['href' => '?page=audit&scope=mine', 'label' => 'سجل نشاطي',        'icon' => '🙋', 'admin' => false, 'active' => $auditScope === 'mine'],
     ['href' => '?page=audit&scope=all',  'label' => 'سجل نشاط اللوحة',  'icon' => '🕵️', 'admin' => true,  'active' => $auditScope === 'all'],
     ['href' => '?page=server',           'label' => 'السيرفر',          'icon' => '🖥️', 'admin' => false, 'active' => $current === 'server'],
@@ -47,6 +48,7 @@ $nav = [
       <?php if ($item['admin'] && !is_admin()) continue; ?>
       <a class="nav-link <?= $item['active'] ? 'is-active' : '' ?>" href="<?= e($item['href']) ?>">
         <span aria-hidden="true"><?= $item['icon'] ?></span> <?= e(__($item['label'])) ?>
+        <?php if (!empty($item['badge'])): ?><span class="nav-count"><?= (int)$item['badge'] ?></span><?php endif; ?>
       </a>
     <?php endforeach; ?>
   </nav>
