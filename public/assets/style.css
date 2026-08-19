@@ -1432,6 +1432,8 @@ body.auth-body-page .app-main {
   color: #ffffff;
   stroke: #ffffff;
   flex-shrink: 0;
+}
+
 /* Source Folder Tabs - Solid Orange System Buttons with White Folder Icons */
 .src-tabs .btn {
   background: var(--accent-gradient) !important;
@@ -1442,7 +1444,8 @@ body.auth-body-page .app-main {
   box-shadow: var(--shadow) !important;
   opacity: 0.82;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  display: inline-flex !align-items: center;
+  display: inline-flex;
+  align-items: center;
   gap: 0.5rem;
 }
 
@@ -1515,6 +1518,17 @@ body.auth-body-page .app-main {
   opacity: 0.9;
   display: inline-block;
   vertical-align: middle;
+  /* shell commands are latin: keep them LTR under an RTL page, otherwise the
+     ellipsis eats the start of the command and leading slashes jump to the end */
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: left;
+}
+
+.cmd-wrapper.is-expanded {
+  /* keep the toggle beside the first line instead of floating in the middle
+     of a 15-line block */
+  align-items: flex-start;
 }
 
 .cmd-wrapper.is-expanded .cmd-text {

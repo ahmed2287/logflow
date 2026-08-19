@@ -102,6 +102,31 @@ switch ($page) {
         ]);
         break;
 
+    /* ----------------------------------------------------------- log files explorer */
+    case 'logs':
+        require_login();
+        $options = [
+            'search'  => (string)($_GET['q'] ?? ''),
+            'sort'    => (string)($_GET['sort'] ?? 'mtime'),
+            'dir'     => (string)($_GET['dir'] ?? 'desc'),
+            'min_age' => (string)($_GET['min_age'] ?? ''),
+        ];
+        $status  = log_dir_status();
+        $skipped = [];
+        $files   = $status['ok'] ? log_list($options, $skipped) : [];
+
+        view('logs', [
+            'flashes'  => flash_take(),
+            'status'   => $status,
+            'skipped'  => $skipped,
+            'files'    => $files,
+            'totals'   => log_totals($files),
+            'options'  => $options,
+            'sources'  => log_sources(),
+            'active'   => log_active_source(),
+        ]);
+        break;
+
     /* ------------------------------------------------------- view file */
     case 'view':
         require_login();

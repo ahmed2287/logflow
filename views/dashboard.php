@@ -217,107 +217,64 @@ layout_start();
   </div>
 </div>
 
-<!-- 3. Source Tabs & Search Toolbar -->
-<?php if (count($sources) > 1): ?>
-  <nav class="src-tabs" style="display: flex; gap: 0.6rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
-    <?php foreach ($sources as $source): ?>
-      <?php $isActive = $activeSrc && $activeSrc['name'] === $source['name']; ?>
-      <a class="btn <?= $isActive ? 'btn-primary is-active-tab' : '' ?>"
-         href="?page=dashboard&amp;src=<?= urlencode($source['name']) ?>">
-        <svg viewBox="0 0 24 24" fill="rgba(255, 255, 255, 0.25)" stroke="#ffffff" stroke-width="2" width="18" height="18" style="width: 18px; height: 18px; max-width: 18px; max-height: 18px; flex-shrink: 0; color: #ffffff;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-        <span style="color: #ffffff; font-weight: 700;"><?= e($source['name']) ?></span>
-      </a>
-    <?php endforeach; ?>
-  </nav>
-<?php endif; ?>
+</div>
 
-<form class="saas-toolbar" method="get" action="" style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.25rem;">
-  <input type="hidden" name="page" value="dashboard">
-  <?php if ($activeSrc): ?><input type="hidden" name="src" value="<?= e($activeSrc['name']) ?>"><?php endif; ?>
-  
-  <div class="search-field" style="flex: 1; min-width: 220px;">
-    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="width: 18px; height: 18px; max-width: 18px; max-height: 18px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-    <input type="search" name="q" value="<?= e($_GET['q'] ?? '') ?>" placeholder="<?= e(__('ابحث في أسماء الملفات…')) ?>">
+<!-- 3. Sources & System Overview Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1.5rem; margin-bottom: 1.5rem;">
+  <div class="saas-card" style="margin: 0; padding: 1.25rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem;">
+      <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.4rem;">
+        <span style="color: var(--accent);">📁</span> <?= __('مصادر اللوجات المفعلة') ?>
+      </h4>
+      <span class="tag tag-success" style="font-weight: 700;"><?= count($sources) ?> <?= __('مصدر') ?></span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+      <?php foreach ($sources as $s): ?>
+        <a href="?page=logs&amp;src=<?= urlencode($s['name']) ?>" style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; background: var(--surface-2); border-radius: var(--radius); text-decoration: none; color: var(--text); border: 1px solid var(--border);">
+          <span style="font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; gap: 0.4rem;">
+            <svg viewBox="0 0 24 24" fill="rgba(255,107,0,0.2)" stroke="var(--accent)" stroke-width="2" width="16" height="16"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <?= e($s['name']) ?>
+          </span>
+          <span class="muted small mono ltr"><?= e($s['path']) ?></span>
+        </a>
+      <?php endforeach; ?>
+    </div>
   </div>
 
-  <select name="min_age" style="height: 40px; border-radius: var(--radius); font-size: 0.84rem;">
-    <option value=""><?= __('كل الأعمار (الأيام)') ?></option>
-    <option value="1" <?= ($_GET['min_age'] ?? '') === '1' ? 'selected' : '' ?>><?= __('أقدم من 1 يوم') ?></option>
-    <option value="7" <?= ($_GET['min_age'] ?? '') === '7' ? 'selected' : '' ?>><?= __('أقدم من 7 أيام') ?></option>
-    <option value="30" <?= ($_GET['min_age'] ?? '') === '30' ? 'selected' : '' ?>><?= __('أقدم من 30 يوم') ?></option>
-  </select>
-
-  <select name="sort" style="height: 40px; border-radius: var(--radius); font-size: 0.84rem;">
-    <option value="mtime" <?= ($_GET['sort'] ?? 'mtime') === 'mtime' ? 'selected' : '' ?>><?= __('الترتيب حسب: التاريخ') ?></option>
-    <option value="size" <?= ($_GET['sort'] ?? '') === 'size' ? 'selected' : '' ?>><?= __('الترتيب حسب: الحجم') ?></option>
-    <option value="name" <?= ($_GET['sort'] ?? '') === 'name' ? 'selected' : '' ?>><?= __('الترتيب حسب: الاسم') ?></option>
-  </select>
-
-  <select name="dir" style="height: 40px; border-radius: var(--radius); font-size: 0.84rem;">
-    <option value="desc" <?= ($_GET['dir'] ?? 'desc') === 'desc' ? 'selected' : '' ?>><?= __('تنازلي ⬇') ?></option>
-    <option value="asc" <?= ($_GET['dir'] ?? '') === 'asc' ? 'selected' : '' ?>><?= __('تصاعدي ⬆') ?></option>
-  </select>
-
-  <button class="btn btn-primary btn-sm" type="submit" style="height: 40px; font-weight: 700; padding: 0 1.2rem;"><?= __('تطبيق الفلتر') ?></button>
-</form>
-
-<!-- 4. Log Files Data Table -->
-<form id="bulk-form" method="post" action="?page=delete_bulk<?= e(src_qs()) ?>" data-confirm="<?= e(__('هل أنت تأكد من حذف {n} ملف نهائيًا؟')) ?>">
-  <?= csrf_field() ?>
-
-  <div id="bulkbar" class="bulkbar" hidden>
-    <span><?= __('محدد:') ?> <strong id="bulk-count">0</strong> <?= __('ملف') ?> (<span id="bulk-size">0 B</span>)</span>
-    <button class="btn btn-danger btn-sm" type="submit">🗑️ <?= __('حذف المحدد') ?></button>
-    <button class="btn btn-ghost btn-sm" type="button" id="bulk-clear"><?= __('إلغاء التحديد') ?></button>
+  <div class="saas-card" style="margin: 0; padding: 1.25rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem;">
+      <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.4rem;">
+        <span style="color: #38bdf8;">📊</span> <?= __('مشرّف الحالة والمراقبة') ?>
+      </h4>
+      <span class="tag tag-info" style="font-weight: 700;">🟢 Online</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.88rem;">
+      <div style="display: flex; justify-content: space-between; padding-bottom: 0.4rem; border-bottom: 1px dashed var(--border);">
+        <span class="muted"><?= __('استقرار النظام') ?></span>
+        <strong style="color: #22c55e;">100% Stable</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding-bottom: 0.4rem; border-bottom: 1px dashed var(--border);">
+        <span class="muted"><?= __('معدل المسح الفوري') ?></span>
+        <strong class="mono">Real-time (0.5s)</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span class="muted"><?= __('تراخيص السجلات والتنظيف') ?></span>
+        <strong style="color: var(--accent);"><?= __('مؤمّنة ومعالجة') ?></strong>
+      </div>
+    </div>
   </div>
+</div>
 
-  <div class="table-wrap">
-    <table class="table">
-      <thead>
-        <tr>
-          <?php if (is_admin()): ?><th style="width: 40px;"><input type="checkbox" id="check-all"></th><?php endif; ?>
-          <th><?= __('الملف') ?></th>
-          <th class="col-num"><?= __('الحجم') ?></th>
-          <th class="col-date"><?= __('آخر تعديل') ?></th>
-          <th class="col-actions"><?= __('إجراءات') ?></th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php if (empty($files)): ?>
-          <tr><td colspan="5" class="muted" style="text-align: center; padding: 3rem;"><?= __('لا توجد ملفات لوج مطابقة.') ?></td></tr>
-        <?php else: ?>
-          <?php foreach ($files as $file): ?>
-            <tr>
-              <?php if (is_admin()): ?>
-                <td><input type="checkbox" name="files[]" value="<?= e($file['rel']) ?>" class="row-check" data-size="<?= (int)$file['size'] ?>"></td>
-              <?php endif; ?>
-              <td>
-                <div style="display: flex; align-items: center; gap: 0.6rem;">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="width: 18px; height: 18px; max-width: 18px; max-height: 18px; color: var(--accent);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                  <a class="mono ltr" style="font-weight: 700; color: #ffffff;" href="?page=view&amp;file=<?= urlencode($file['rel']) ?><?= e(src_qs()) ?>"><?= e($file['rel']) ?></a>
-                </div>
-              </td>
-              <td class="col-num mono"><?= bytes_html($file['size']) ?></td>
-              <td class="col-date mono ltr"><?= date('Y-m-d H:i', $file['mtime']) ?></td>
-              <td class="col-actions">
-                <a class="btn btn-ghost btn-sm" href="?page=view&amp;file=<?= urlencode($file['rel']) ?><?= e(src_qs()) ?>">👁️ <?= __('عرض') ?></a>
-                <a class="btn btn-ghost btn-sm" href="?page=download&amp;file=<?= urlencode($file['rel']) ?><?= e(src_qs()) ?>">⬇ <?= __('تحميل') ?></a>
-              </td>
-            </tr>
-          <?php endforeach; ?>
-        <?php endif; ?>
-      </tbody>
-    </table>
-  </div>
-</form>
-
-<!-- 5. Bottom System Insights Banner -->
+<!-- 4. Bottom System Insights Banner -->
 <div class="insights-banner">
   <div class="insights-content">
     <h4>⚡ <?= __('تنبؤات وتحليلات النظام (System Insights)') ?></h4>
     <p><?= __('النظام يعمل باستقرار تام 100%. تم تحرير المساحة وإدارة السجلات بكفاءة، ولا توجد أخطاء حرجة غير معالجة.') ?></p>
   </div>
-  <a href="?page=audit" class="btn btn-primary"><?= __('عرض التقرير المفصل') ?></a>
+  <div style="display: flex; gap: 0.6rem;">
+    <a href="?page=logs" class="btn btn-primary">📁 <?= __('تصفح ملفات اللوجات') ?></a>
+    <a href="?page=audit" class="btn" style="background: rgba(255,255,255,0.1); color: #ffffff; border: 1px solid rgba(255,255,255,0.2);"><?= __('عرض التقرير المفصل') ?></a>
+  </div>
 </div>
 
 <?php layout_end(__('اللوحة الرئيسية'), $flashes); ?>

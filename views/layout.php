@@ -80,6 +80,11 @@ summary { list-style: none; cursor: pointer; }
       <span><?= __('اللوحة الرئيسية') ?></span>
     </a>
 
+    <a class="nav-link <?= $page === 'logs' ? 'is-active' : '' ?>" href="?page=logs<?= e(src_qs()) ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="width: 20px; height: 20px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+      <span><?= __('ملفات اللوجات') ?></span>
+    </a>
+
     <a class="nav-link <?= $page === 'server' ? 'is-active' : '' ?>" href="?page=server<?= e(src_qs()) ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="width: 20px; height: 20px;"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
       <span><?= __('السيرفر والموارد') ?></span>
