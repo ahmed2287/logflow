@@ -160,7 +160,14 @@ layout_start();
             <td class="col-num mono"><?= bytes_html($proc['rss']) ?></td>
             <td class="mono ltr"><?= e($proc['stat']) ?></td>
             <td class="mono ltr"><?= e($proc['etime']) ?></td>
-            <td style="max-width: 320px;"><code class="mono ltr" style="font-size: 0.8rem; word-break: break-all; opacity: 0.85; color: var(--text);"><?= e($proc['cmd']) ?></code></td>
+            <td style="max-width: 380px;">
+              <div class="cmd-wrapper" data-pid="<?= (int)$proc['pid'] ?>">
+                <code class="cmd-text"><?= e($proc['cmd']) ?></code>
+                <?php if (mb_strlen($proc['cmd']) > 35): ?>
+                  <button type="button" class="btn-expand-cmd" title="<?= e(__('عرض/إخفاء الأمر كاملًا')) ?>">▼</button>
+                <?php endif; ?>
+              </div>
+            </td>
           </tr>
         <?php endforeach; ?>
       </tbody>

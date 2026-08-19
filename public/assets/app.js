@@ -477,8 +477,21 @@
           // 7. Top Active Processes Table
           var procsTbody = document.getElementById('srv-procs-tbody');
           if (procsTbody && data.procs && data.procs.length > 0) {
+            var expandedPids = {};
+            var currentExpanded = procsTbody.querySelectorAll('.cmd-wrapper.is-expanded');
+            Array.prototype.forEach.call(currentExpanded, function (w) {
+              var pid = w.getAttribute('data-pid');
+              if (pid) expandedPids[pid] = true;
+            });
+
             var html = '';
             data.procs.forEach(function (p) {
+              var isExp = !!expandedPids[p.pid];
+              var hasBtn = p.cmd.length > 35;
+              var wrapCls = 'cmd-wrapper' + (isExp ? ' is-expanded' : '');
+              var arrow = isExp ? '▲' : '▼';
+              var btnHtml = hasBtn ? '<button type="button" class="btn-expand-cmd" title="عرض/إخفاء الأمر كاملًا">' + arrow + '</button>' : '';
+
               html += '<tr>' +
                 '<td class="col-num mono">' + p.pid + '</td>' +
                 '<td class="mono ltr">' + p.user + '</td>' +
@@ -487,7 +500,7 @@
                 '<td class="col-num mono">' + p.rss + '</td>' +
                 '<td class="mono ltr">' + p.stat + '</td>' +
                 '<td class="mono ltr">' + p.etime + '</td>' +
-                '<td style="max-width: 320px;"><code class="mono ltr" style="font-size: 0.8rem; word-break: break-all; opacity: 0.85; color: var(--text);">' + p.cmd + '</code></td>' +
+                '<td style="max-width: 380px;"><div class="' + wrapCls + '" data-pid="' + p.pid + '"><code class="cmd-text">' + p.cmd + '</code>' + btnHtml + '</div></td>' +
               '</tr>';
             });
             procsTbody.innerHTML = html;
@@ -521,4 +534,15 @@
 
     liveServerBtn.addEventListener('click', toggleLiveServer);
   }
+
+  // Global click delegation for Collapsible Process Command Expander
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.btn-expand-cmd');
+    if (!btn) return;
+    var wrapper = btn.closest('.cmd-wrapper');
+    if (wrapper) {
+      wrapper.classList.toggle('is-expanded');
+      btn.textContent = wrapper.classList.contains('is-expanded') ? '▲' : '▼';
+    }
+  });
 })();

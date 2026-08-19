@@ -1389,3 +1389,50 @@ body.auth-body-page .app-main {
     flex-wrap: wrap;
   }
 }
+
+/* Process Command Collapsible Expander */
+.cmd-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  max-width: 380px;
+}
+
+.cmd-text {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 340px;
+  color: var(--text);
+  opacity: 0.9;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.cmd-wrapper.is-expanded .cmd-text {
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-width: 100%;
+}
+
+.btn-expand-cmd {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.72rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.btn-expand-cmd:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--surface);
+}
