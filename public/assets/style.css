@@ -1156,25 +1156,40 @@ body.auth-body-page .app-main {
   margin: auto;
 }
 
+.auth-body-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  box-sizing: border-box;
+}
+
 .auth-wrapper {
   position: relative;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   width: 100%;
-  padding: 1rem 0;
+  flex: 1;
+  padding: 2.5rem 1rem;
+  box-sizing: border-box;
 }
 
 .auth-card {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 480px;
+  max-width: 440px;
   margin: 0 auto;
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: 24px;
-  padding: 2.5rem 2.25rem;
+  padding: 2.25rem 2rem;
   box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
@@ -1187,7 +1202,7 @@ body.auth-body-page .app-main {
   align-items: center;
   justify-content: center;
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.75rem;
   width: 100%;
 }
 
@@ -1315,7 +1330,7 @@ body.auth-body-page .app-main {
 .btn-submit {
   width: 100%;
   max-width: 380px;
-  margin-top: 1.75rem;
+  margin-top: 1.5rem;
   padding: 0.85rem 1.5rem;
   font-size: 1.05rem;
   font-weight: 700;
@@ -1331,36 +1346,60 @@ body.auth-body-page .app-main {
   flex-direction: row;
   align-items: center;
   justify-content: space-around;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding: 0.9rem 1.5rem;
+  gap: 0.35rem;
+  margin-top: 1.5rem;
+  padding: 0.65rem 0.65rem;
   background: var(--accent-gradient);
   border-radius: var(--radius-lg);
   box-shadow: var(--accent-glow);
   color: #ffffff;
   width: 100%;
+  max-width: 380px;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .feature-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
-  font-size: 0.88rem;
+  gap: 0.25rem;
+  font-size: 0.74rem;
   font-weight: 700;
   color: #ffffff;
   white-space: nowrap;
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   text-align: center;
 }
 
+.feature-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .feature-chip svg {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   color: #ffffff;
   stroke: #ffffff;
   flex-shrink: 0;
+}
+
+.auth-body-page .app-footer {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto !important;
+  padding: 1.25rem 2rem 1.5rem;
+  border-top: 1px solid var(--border);
+  box-sizing: border-box;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 /* ------------------------------------------------------------ Responsive Breakpoints */
