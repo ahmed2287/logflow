@@ -1,4 +1,4 @@
-/* AlmasryLog — bulk selection, confirmations. No dependencies. */
+/* LogFlow — Next-Gen SaaS Dashboard Interactivity */
 (function () {
   'use strict';
 
@@ -54,7 +54,7 @@
     sync();
   }
 
-  /* --- confirm destructive submits (in-page modal, not window.confirm) --- */
+  /* --- confirm destructive submits --- */
   var I18N = window.APP_I18N || { title: 'تأكيد العملية', yes: 'نعم، نفّذ', cancel: 'إلغاء' };
 
   function showConfirm(message, onYes) {
@@ -107,7 +107,6 @@
   document.querySelectorAll('form[data-confirm]').forEach(function (f) {
     f.addEventListener('submit', function (event) {
       var message = f.getAttribute('data-confirm');
-      // The bulk form only needs confirming when something is actually selected.
       if (f.id === 'bulk-form') {
         var n = f.querySelectorAll('.row-check:checked').length;
         if (n === 0) { event.preventDefault(); return; }
@@ -118,23 +117,301 @@
     });
   });
 
-  /* --- light/dark toggle (manual choice beats the system preference) --- */
-  var themeBtn = document.getElementById('theme-toggle');
-  if (themeBtn) {
+  /* --- light/dark toggle --- */
+  var themeBtns = [document.getElementById('theme-toggle'), document.getElementById('theme-toggle-header')].filter(Boolean);
+  if (themeBtns.length) {
     var effectiveTheme = function () {
       return document.documentElement.dataset.theme
         || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     };
-    // Show the mode the click switches TO: a sun while dark, a moon while light.
     var paintIcon = function () {
-      themeBtn.textContent = effectiveTheme() === 'dark' ? '☀️' : '🌙';
+      themeBtns.forEach(function (btn) {
+        btn.textContent = effectiveTheme() === 'dark' ? '☀️' : '🌙';
+      });
     };
-    themeBtn.addEventListener('click', function () {
-      var next = effectiveTheme() === 'dark' ? 'light' : 'dark';
-      document.documentElement.dataset.theme = next;
-      try { localStorage.setItem('almasrylog_theme', next); } catch (e) {}
-      paintIcon();
+    themeBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        try { localStorage.setItem('logflow_theme', next); } catch (e) {}
+        paintIcon();
+      });
     });
     paintIcon();
+  }
+
+  /* --- toggle password visibility --- */
+  var togglePwdBtn = document.getElementById('toggle-password-btn');
+  var pwdInput = document.getElementById('input-password');
+  if (togglePwdBtn && pwdInput) {
+    togglePwdBtn.addEventListener('click', function () {
+      var isPwd = pwdInput.type === 'password';
+      pwdInput.type = isPwd ? 'text' : 'password';
+      var eyeShow = togglePwdBtn.querySelector('.eye-show');
+      var eyeHide = togglePwdBtn.querySelector('.eye-hide');
+      if (eyeShow && eyeHide) {
+        eyeShow.style.display = isPwd ? 'none' : 'block';
+        eyeHide.style.display = isPwd ? 'block' : 'none';
+      }
+    });
+  }
+
+  /* --- Time comparison & live clock ticking --- */
+  var hdrServerTime = document.getElementById('hdr-server-time');
+  var hdrClientTime = document.getElementById('hdr-client-time');
+  var hdrOffsetVal  = document.getElementById('hdr-offset-val');
+  var hdrOffsetBadge= document.getElementById('hdr-offset-badge');
+
+  var initialServerTsEl = hdrServerTime || document.getElementById('server-clock-val');
+  if (initialServerTsEl) {
+    var initialServerTs = parseInt(initialServerTsEl.getAttribute('data-server-ts'), 10) * 1000;
+    var initialClientTs = Date.now();
+    var diffMs = initialServerTs - initialClientTs;
+
+    var pad = function (n) { return String(n).padStart(2, '0'); };
+
+    var updateClocks = function () {
+      var nowClient = new Date();
+      var nowServer = new Date(nowClient.getTime() + diffMs);
+
+      // Format Client Time
+      var cTimeStr = pad(nowClient.getHours()) + ':' + pad(nowClient.getMinutes()) + ':' + pad(nowClient.getSeconds());
+      if (hdrClientTime) hdrClientTime.textContent = cTimeStr;
+
+      // Format Server Time
+      var sTimeStr = pad(nowServer.getHours()) + ':' + pad(nowServer.getMinutes()) + ':' + pad(nowServer.getSeconds());
+      if (hdrServerTime) hdrServerTime.textContent = sTimeStr;
+
+      // Difference formatting
+      var absDiffSec = Math.abs(Math.round(diffMs / 1000));
+      var hours = Math.floor(absDiffSec / 3600);
+      var minutes = Math.floor((absDiffSec % 3600) / 60);
+      var seconds = absDiffSec % 60;
+
+      var sign = diffMs >= 0 ? '+' : '-';
+      var formattedDiff = sign + pad(hours) + ':' + pad(minutes) + ':' + pad(seconds);
+      
+      if (hdrOffsetVal) hdrOffsetVal.textContent = formattedDiff;
+
+      var isSynced = absDiffSec < 60;
+      var statusText = isSynced 
+        ? (I18N.synced || 'مُتزامن') 
+        : (I18N.offsetHours ? I18N.offsetHours.replace('%d', String(hours)) : ('فرق ' + hours + ' ساعة'));
+      var statusClass = isSynced ? 'tag tag-sm tag-success' : 'tag tag-sm tag-warn';
+
+      if (hdrOffsetBadge) { hdrOffsetBadge.textContent = statusText; hdrOffsetBadge.className = statusClass; }
+    };
+
+    updateClocks();
+    setInterval(updateClocks, 1000);
+  }
+
+  /* --- Log Search Up/Down Match Navigation --- */
+  var searchInput = document.getElementById('log-search-input');
+  var prevBtn     = document.getElementById('btn-search-prev');
+  var nextBtn     = document.getElementById('btn-search-next');
+  var counterBadge= document.getElementById('search-counter-badge');
+  var logTable    = document.querySelector('.logtable');
+
+  if (logTable && prevBtn && nextBtn) {
+    var matches = Array.prototype.slice.call(logTable.querySelectorAll('mark'));
+    var currentIndex = -1;
+
+    var updateMatchSelection = function (index) {
+      if (!matches.length) return;
+      
+      // Wrap index around
+      if (index < 0) index = matches.length - 1;
+      if (index >= matches.length) index = 0;
+      currentIndex = index;
+
+      // Remove active class from all marks
+      matches.forEach(function (m) { m.classList.remove('mark-active'); });
+
+      // Highlight active mark
+      var target = matches[currentIndex];
+      target.classList.add('mark-active');
+
+      // Scroll ONLY the inner .logview container, leaving outer window position still!
+      var logView = logTable.closest('.logview') || logTable.parentElement;
+      if (logView) {
+        var targetRect = target.getBoundingClientRect();
+        var containerRect = logView.getBoundingClientRect();
+        var scrollTop = logView.scrollTop + (targetRect.top - containerRect.top) - (containerRect.height / 2) + (targetRect.height / 2);
+        logView.scrollTo({ top: scrollTop, behavior: 'smooth' });
+      }
+
+      // Update counter badge
+      if (counterBadge) {
+        counterBadge.textContent = (currentIndex + 1) + ' / ' + matches.length;
+        counterBadge.style.display = 'inline-block';
+      }
+    };
+
+    if (matches.length > 0) {
+      prevBtn.disabled = false;
+      nextBtn.disabled = false;
+      updateMatchSelection(0);
+    } else if (counterBadge) {
+      counterBadge.style.display = 'none';
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
+    }
+
+    nextBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      updateMatchSelection(currentIndex + 1);
+    });
+
+    prevBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      updateMatchSelection(currentIndex - 1);
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          if (matches.length > 0) {
+            e.preventDefault();
+            if (e.shiftKey) {
+              updateMatchSelection(currentIndex - 1);
+            } else {
+              updateMatchSelection(currentIndex + 1);
+            }
+          }
+        }
+      });
+    }
+  }
+
+  /* --- Real-Time Live Log Stream (tail -f) --- */
+  var liveBtn  = document.getElementById('btn-live-stream');
+  var logTable = document.querySelector('.logtable');
+  var logView  = document.querySelector('.logview');
+
+  if (liveBtn && logTable && logView) {
+    var isLive        = false;
+    var streamTimer   = null;
+    var currentOffset = parseInt(liveBtn.getAttribute('data-offset'), 10) || 0;
+    var fileRel       = liveBtn.getAttribute('data-file');
+    var liveDot       = liveBtn.querySelector('.live-dot');
+    var liveLabel     = liveBtn.querySelector('.live-label');
+
+    var getMaxLineNo = function () {
+      var firstRow = logTable.querySelector('tbody tr:first-child');
+      if (!firstRow) return 0;
+      var noTd = firstRow.querySelector('.lineno');
+      return noTd ? (parseInt(noTd.textContent, 10) || 0) : 0;
+    };
+
+    var appendLogLines = function (lines) {
+      if (!lines || !lines.length) return;
+
+      var tbody = logTable.querySelector('tbody');
+      if (!tbody) return;
+
+      var currentMaxLine = getMaxLineNo();
+      var searchInput = document.getElementById('log-search-input');
+      var needle = searchInput ? searchInput.value.trim() : '';
+
+      lines.forEach(function (rawLine, idx) {
+        var lineNo = currentMaxLine + idx + 1;
+        var tr = document.createElement('tr');
+        
+        var classes = ['line-live-new'];
+        var plain = rawLine.toLowerCase();
+        if (plain.indexOf('error') !== -1 || plain.indexOf('fatal') !== -1 || plain.indexOf('exception') !== -1 || plain.indexOf('critical') !== -1) {
+          classes.push('line-error');
+        } else if (plain.indexOf('warn') !== -1) {
+          classes.push('line-warn');
+        } else if (plain.indexOf('notice') !== -1 || plain.indexOf('info') !== -1) {
+          classes.push('line-info');
+        }
+        tr.className = classes.join(' ');
+
+        var tdNo = document.createElement('td');
+        tdNo.className = 'lineno';
+        tdNo.textContent = String(lineNo);
+
+        var tdText = document.createElement('td');
+        tdText.className = 'linetext';
+
+        if (needle) {
+          try {
+            var escapedNeedle = needle.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+            var regex = new RegExp('(' + escapedNeedle + ')', 'gi');
+            tdText.innerHTML = rawLine.replace(regex, '<mark>$1</mark>');
+          } catch (e) {
+            tdText.innerHTML = rawLine;
+          }
+        } else {
+          tdText.innerHTML = rawLine;
+        }
+
+        tr.appendChild(tdNo);
+        tr.appendChild(tdText);
+
+        // Prepend newest line at the TOP of tbody!
+        if (tbody.firstChild) {
+          tbody.insertBefore(tr, tbody.firstChild);
+        } else {
+          tbody.appendChild(tr);
+        }
+      });
+
+      // Smooth scroll container to the top to follow newest incoming records
+      logView.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    var pollStream = function () {
+      fetch('?page=stream_log&file=' + encodeURIComponent(fileRel) + '&offset=' + currentOffset)
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (data && data.ok) {
+            currentOffset = data.offset;
+            liveBtn.setAttribute('data-offset', String(currentOffset));
+            if (data.new_lines && data.new_lines.length > 0) {
+              appendLogLines(data.new_lines);
+            }
+          }
+        })
+        .catch(function (err) {
+          console.warn('Live stream polling error:', err);
+        });
+    };
+
+    var clearLiveHighlights = function () {
+      var liveRows = logTable.querySelectorAll('tr.line-live-new');
+      Array.prototype.forEach.call(liveRows, function (row) {
+        row.classList.remove('line-live-new');
+      });
+    };
+
+    var toggleLiveStream = function () {
+      isLive = !isLive;
+      if (isLive) {
+        liveBtn.style.background = 'var(--accent-gradient)';
+        liveBtn.style.color = '#ffffff';
+        liveBtn.style.boxShadow = 'var(--accent-glow)';
+        if (liveDot) { liveDot.style.background = '#22c55e'; liveDot.className = 'pulse-dot-green'; }
+        if (liveLabel) liveLabel.textContent = I18N.stopLiveStream || '⏸ Pause Live Stream';
+        
+        logView.scrollTo({ top: 0, behavior: 'smooth' });
+        pollStream();
+        streamTimer = setInterval(pollStream, 1500);
+      } else {
+        clearInterval(streamTimer);
+        liveBtn.style.background = '';
+        liveBtn.style.color = 'var(--accent)';
+        liveBtn.style.boxShadow = '';
+        if (liveDot) { liveDot.style.background = '#22c55e'; liveDot.className = ''; }
+        if (liveLabel) liveLabel.textContent = I18N.startLiveStream || '▶️ Live Stream';
+        
+        // Revert orange highlights of live records back to normal text color!
+        clearLiveHighlights();
+      }
+    };
+
+    liveBtn.addEventListener('click', toggleLiveStream);
   }
 })();

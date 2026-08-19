@@ -8,10 +8,10 @@ layout_start();
 
 <div class="page-head">
   <div>
-    <h1><?= __('تنظيف اللوجات — حذف السطور القديمة') ?><?= $active ? ' — ' . e($active['name']) : '' ?></h1>
-    <p class="muted mono ltr"><?= e($status['path']) ?></p>
+    <h1 class="gradient-title"><?= __('تنظيف اللوجات — حذف السطور القديمة') ?><?= $active ? ' — ' . e($active['name']) : '' ?></h1>
+    <p class="muted mono ltr" style="font-size: 0.85rem; margin-top: 0.2rem;"><?= e($status['path']) ?></p>
   </div>
-  <a class="btn btn-ghost" href="?page=dashboard<?= e(src_qs()) ?>">← <?= __('رجوع') ?></a>
+  <a class="btn btn-primary" href="?page=dashboard<?= e(src_qs()) ?>">← <?= __('رجوع') ?></a>
 </div>
 
 <?php if (count($sources) > 1): ?>
@@ -24,8 +24,8 @@ layout_start();
 <?php endif; ?>
 
 <?php if ($isAdmin && $pending): ?>
-  <section class="panel panel-danger">
-    <h2>📨 <?= __('طلبات تنظيف في انتظار موافقتك') ?> (<?= count($pending) ?>)</h2>
+  <section class="saas-card" style="border-color: var(--danger); margin-bottom: 2rem;">
+    <h2 style="color: var(--danger); margin-top: 0; font-size: 1.15rem;">📨 <?= __('طلبات تنظيف في انتظار موافقتك') ?> (<?= count($pending) ?>)</h2>
     <div class="table-wrap">
       <table class="table">
         <thead>
@@ -75,22 +75,20 @@ layout_start();
         </tbody>
       </table>
     </div>
-    <p class="muted small"><?= __('التنفيذ يتم بمعايير الطلب نفسها وقت الموافقة — الأرقام قد تزيد لو الملف كبر بعد الطلب.') ?></p>
   </section>
 <?php endif; ?>
 
-<form class="panel" method="get" action="">
+<form class="saas-card" method="get" action="" style="margin-bottom: 2rem;">
   <input type="hidden" name="page" value="cleanup">
   <?php if ($active): ?><input type="hidden" name="src" value="<?= e($active['name']) ?>"><?php endif; ?>
-  <h2><?= __('احذف كل السطور الأقدم من تاريخ') ?></h2>
-  <p class="muted">
+  <h2 style="margin-top: 0; font-size: 1.15rem; font-weight: 700;"><?= __('احذف كل السطور الأقدم من تاريخ') ?></h2>
+  <p class="muted" style="margin-bottom: 1.25rem;">
     <?= __('يتم حذف السطور التي تاريخها <strong>قبل</strong> اليوم المحدد (اليوم المحدد نفسه يبقى). السطور بدون تاريخ — مثل تكملة Stack Trace — تتبع آخر سطر مؤرَّخ قبلها.') ?>
   </p>
 
-  <div class="days-row">
-    <input class="days-input date-input" type="date" name="before" required dir="ltr"
-           value="<?= e($before) ?>" max="<?= date('Y-m-d') ?>">
-    <select class="days-input file-select" name="file" dir="ltr">
+  <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem;">
+    <input type="date" name="before" required dir="ltr" value="<?= e($before) ?>" max="<?= date('Y-m-d') ?>" style="font-size: 1.05rem; font-weight: 700; padding: 0.5rem 0.8rem;">
+    <select name="file" dir="ltr" style="font-size: 1rem; font-weight: 600; min-width: 200px;">
       <option value="*" <?= $target === '*' ? 'selected' : '' ?>><?= __('كل الملفات') ?> (<?= count($files) ?>)</option>
       <?php foreach ($files as $file): ?>
         <option value="<?= e($file['rel']) ?>" <?= $target === $file['rel'] ? 'selected' : '' ?>><?= e($file['rel']) ?></option>
@@ -99,24 +97,22 @@ layout_start();
     <button class="btn btn-primary" type="submit">🔍 <?= __('معاينة') ?></button>
   </div>
 
-  <div class="quick-days" id="quick-days">
-    <span class="muted"><?= __('اختصارات — أقدم من:') ?></span>
+  <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;" id="quick-days">
+    <span class="muted small"><?= __('اختصارات — أقدم من:') ?></span>
     <?php foreach (['أسبوع' => 7, 'شهر واحد' => 30, '3 شهور' => 90, '6 شهور' => 180, 'سنة واحدة' => 365] as $label => $daysAgo): ?>
       <?php $quick = date('Y-m-d', time() - $daysAgo * 86400); ?>
-      <button type="button" class="chip-day <?= $before === $quick ? 'is-active' : '' ?>"
+      <button type="button" class="btn btn-ghost btn-sm <?= $before === $quick ? 'btn-primary' : '' ?>"
               data-date="<?= $quick ?>"><?= __($label) ?></button>
     <?php endforeach; ?>
-    <span class="muted small"><?= __('الاختصار يملأ التاريخ فقط — المعاينة تبدأ بزرار «معاينة».') ?></span>
   </div>
 </form>
 
 <script>
-// Shortcut chips only fill the date field; nothing runs until "Preview".
 document.querySelectorAll('#quick-days [data-date]').forEach(function (chip) {
   chip.addEventListener('click', function () {
     document.querySelector('input[name=before]').value = chip.dataset.date;
-    document.querySelectorAll('#quick-days [data-date]').forEach(function (c) { c.classList.remove('is-active'); });
-    chip.classList.add('is-active');
+    document.querySelectorAll('#quick-days [data-date]').forEach(function (c) { c.classList.remove('btn-primary'); });
+    chip.classList.add('btn-primary');
   });
 });
 </script>
@@ -145,7 +141,7 @@ document.querySelectorAll('#quick-days [data-date]').forEach(function (chip) {
       <strong class="ltr"><?= e(date('d/m/Y', strtotime($before))) ?></strong>.
     </div>
 
-    <div class="table-wrap table-preview">
+    <div class="table-wrap" style="margin-bottom: 1.5rem;">
       <table class="table">
         <thead>
           <tr>
@@ -183,36 +179,30 @@ document.querySelectorAll('#quick-days [data-date]').forEach(function (chip) {
           : sprintf(__('سيتم إرسال طلب للمدير لحذف %s سطر من %d ملف (الأقدم من %s). لن يُحذف شيء قبل موافقته.'),
                     number_format($totalRemove), $filesCount, date('d/m/Y', strtotime($before)));
     ?>
-    <form class="panel panel-danger" method="post" action="?page=cleanup"
-          data-confirm="<?= e($confirmMsg) ?>">
+    <form class="saas-card" style="border-color: var(--danger);" method="post" action="?page=cleanup" data-confirm="<?= e($confirmMsg) ?>">
       <?= csrf_field() ?>
       <input type="hidden" name="before" value="<?= e($before) ?>">
       <input type="hidden" name="file" value="<?= e($target) ?>">
       <input type="hidden" name="confirm" value="yes">
       <?php if ($active): ?><input type="hidden" name="src" value="<?= e($active['name']) ?>"><?php endif; ?>
 
-      <h2><?= $isAdmin ? __('تأكيد الحذف') : __('إرسال طلب التنظيف للمدير') ?></h2>
+      <h2 style="margin-top: 0; color: var(--danger); font-size: 1.15rem;"><?= $isAdmin ? __('تأكيد الحذف') : __('إرسال طلب التنظيف للمدير') ?></h2>
       <p><?= __('أعد إدخال التاريخ') ?> <strong class="ltr"><?= e(date('d/m/Y', strtotime($before))) ?></strong> <?= __('للتأكيد:') ?></p>
-      <div class="days-row">
-        <input class="days-input date-input" type="date" name="before_confirm" required dir="ltr">
+      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+        <input type="date" name="before_confirm" required dir="ltr" style="font-size: 1.05rem; font-weight: 700; padding: 0.5rem 0.8rem;">
         <?php if ($isAdmin): ?>
           <button class="btn btn-danger" type="submit">🗑️ <?= __('حذف') ?> <?= number_format($totalRemove) ?> <?= __('سطر نهائيًا') ?></button>
         <?php else: ?>
           <button class="btn btn-primary" type="submit">📨 <?= __('إرسال الطلب للمدير') ?></button>
         <?php endif; ?>
       </div>
-      <p class="muted small">
-        <?= $isAdmin
-            ? __('سيُسجَّل هذا الإجراء في سجل النشاط باسمك') . ' (' . e(current_user()['username']) . ').'
-            : __('لن يُحذف أي سطر إلا بعد موافقة المدير — سيصله طلبك بالتفاصيل دي.') ?>
-      </p>
     </form>
   <?php endif; ?>
 <?php endif; ?>
 
 <?php if (!$isAdmin && $myRequests): ?>
-  <section class="section">
-    <h2 class="section-title">📨 <?= __('طلباتي') ?></h2>
+  <section style="margin-top: 2.5rem;">
+    <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem;">📨 <?= __('طلباتي') ?></h2>
     <div class="table-wrap">
       <table class="table">
         <thead>
@@ -237,10 +227,7 @@ document.querySelectorAll('#quick-days [data-date]').forEach(function (chip) {
                 <?php if ($req['status'] === 'pending'): ?>
                   <span class="tag tag-warn">⏳ <?= __('في انتظار الموافقة') ?></span>
                 <?php elseif ($req['status'] === 'approved'): ?>
-                  <span class="tag tag-login">✅ <?= __('تمت الموافقة') ?></span>
-                  <?php if (!empty($req['result'])): ?>
-                    <span class="muted small"><?= number_format((int)$req['result']['lines']) ?> <?= __('سطر') ?> (<?= bytes_html((int)$req['result']['bytes']) ?>)</span>
-                  <?php endif; ?>
+                  <span class="tag tag-success">✅ <?= __('تمت الموافقة') ?></span>
                 <?php else: ?>
                   <span class="tag tag-error">✖ <?= __('مرفوض') ?></span>
                 <?php endif; ?>

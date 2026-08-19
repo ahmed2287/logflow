@@ -2,7 +2,7 @@
 /** @var string $hostname @var array $load @var array $cpu @var array $memory
  *  @var int $uptime @var array $disks @var array $procs @var int $nproc
  *  @var string $psort @var bool $auto */
-$barClass = fn(float $p): string => $p >= 90 ? 'bar-danger' : ($p >= 75 ? 'bar-warn' : '');
+$barClass = fn(float $p): string => $p >= 90 ? 'tag-error' : ($p >= 75 ? 'tag-warn' : 'tag-success');
 $memPct   = $memory['total'] ? $memory['used'] * 100 / $memory['total'] : 0;
 $swapPct  = $memory['swap_total'] ? $memory['swap_used'] * 100 / $memory['swap_total'] : 0;
 $cores    = array_filter($cpu, fn($k) => $k !== 'all', ARRAY_FILTER_USE_KEY);
@@ -11,58 +11,82 @@ layout_start();
 
 <div class="page-head">
   <div>
-    <h1>🖥️ <?= __('السيرفر') ?> — <span class="mono ltr"><?= e($hostname) ?></span></h1>
-    <p class="muted"><?= __('شغال منذ') ?> <?= e(sys_uptime_human($uptime)) ?> · <?= number_format($nproc) ?> <?= __('عملية نشطة') ?></p>
+    <h1 class="gradient-title" style="margin: 0; font-size: 1.6rem;"><?= __('السيرفر') ?> — <span class="mono ltr" style="font-size: 1.3rem; color: #ffffff;"><?= e($hostname) ?></span></h1>
+    <p class="muted" style="margin-top: 0.2rem; font-size: 0.88rem;"><?= __('شغال منذ') ?> <?= e(sys_uptime_human($uptime)) ?> · <?= number_format($nproc) ?> <?= __('عملية نشطة') ?></p>
   </div>
   <div class="head-actions">
-    <a class="btn <?= $auto ? 'btn-primary' : 'btn-ghost' ?>" href="?page=server&amp;psort=<?= e($psort) ?><?= $auto ? '' : '&amp;auto=1' ?>">
+    <a class="btn btn-primary" href="?page=server&amp;psort=<?= e($psort) ?><?= $auto ? '' : '&amp;auto=1' ?>">
       <?= $auto ? '⏸ ' . __('إيقاف التحديث التلقائي') : '▶️ ' . __('تحديث تلقائي (كل 5 ثواني)') ?>
     </a>
-    <a class="btn btn-ghost" href="?page=server&amp;psort=<?= e($psort) ?><?= $auto ? '&amp;auto=1' : '' ?>">🔄 <?= __('تحديث') ?></a>
-    <a class="btn btn-ghost" href="?page=dashboard">← <?= __('رجوع') ?></a>
+    <a class="btn btn-primary" href="?page=server&amp;psort=<?= e($psort) ?><?= $auto ? '&amp;auto=1' : '' ?>">🔄 <?= __('تحديث') ?></a>
+    <a class="btn btn-primary" href="?page=dashboard">← <?= __('رجوع') ?></a>
   </div>
 </div>
 
-<div class="cards">
-  <div class="card">
-    <div class="card-label">CPU</div>
-    <div class="card-value"><?= number_format((float)($cpu['all'] ?? 0), 1) ?>%</div>
-    <div class="card-meta"><?= count($cores) ?> <?= __('كور') ?></div>
-    <div class="day-bar sys-bar <?= $barClass((float)($cpu['all'] ?? 0)) ?>"><span style="width:<?= min(100, (float)($cpu['all'] ?? 0)) ?>%"></span></div>
+<!-- 4 Elevated Metric Cards for Server -->
+<div class="flow-cards-grid">
+  <div class="flow-card">
+    <div class="flow-card-header">
+      <span class="flow-card-title">CPU Usage</span>
+      <span class="tag <?= $barClass((float)($cpu['all'] ?? 0)) ?>"><?= count($cores) ?> <?= __('كور') ?></span>
+    </div>
+    <div class="flow-card-value"><?= number_format((float)($cpu['all'] ?? 0), 1) ?>%</div>
+    <div style="background: rgba(255, 255, 255, 0.1); border-radius: 999px; height: 8px; overflow: hidden; margin-top: 0.75rem;">
+      <div style="width: <?= min(100, (float)($cpu['all'] ?? 0)) ?>%; height: 100%; background: var(--accent-gradient); border-radius: 999px;"></div>
+    </div>
   </div>
-  <div class="card">
-    <div class="card-label">Load Average (1 · 5 · 15)</div>
-    <div class="card-value ltr"><?= number_format($load['1'], 2) ?> · <?= number_format($load['5'], 2) ?> · <?= number_format($load['15'], 2) ?></div>
-    <div class="card-meta"><?= __('نسبةً لعدد الكورات:') ?> <?= count($cores) ? number_format($load['1'] * 100 / count($cores), 0) : 0 ?>%</div>
+
+  <div class="flow-card">
+    <div class="flow-card-header">
+      <span class="flow-card-title">Load Average (1 · 5 · 15)</span>
+      <span class="tag tag-info"><?= count($cores) ? number_format($load['1'] * 100 / count($cores), 0) : 0 ?>% Load</span>
+    </div>
+    <div class="flow-card-value ltr" style="font-size: 1.5rem;"><?= number_format($load['1'], 2) ?> · <?= number_format($load['5'], 2) ?> · <?= number_format($load['15'], 2) ?></div>
+    <div style="font-size: 0.8rem; margin-top: 0.5rem;" class="muted"><?= __('نسبةً لعدد الكورات الكلي') ?></div>
   </div>
-  <div class="card">
-    <div class="card-label"><?= __('الذاكرة') ?></div>
-    <div class="card-value"><?= bytes_html($memory['used']) ?> <small>/ <?= bytes_html($memory['total']) ?></small></div>
-    <div class="card-meta"><?= __('متاح:') ?> <?= bytes_html($memory['available']) ?> · <?= __('كاش:') ?> <?= bytes_html($memory['cached']) ?></div>
-    <div class="day-bar sys-bar <?= $barClass($memPct) ?>"><span style="width:<?= min(100, $memPct) ?>%"></span></div>
+
+  <div class="flow-card">
+    <div class="flow-card-header">
+      <span class="flow-card-title"><?= __('الذاكرة (RAM)') ?></span>
+      <span class="tag <?= $barClass($memPct) ?>"><?= number_format($memPct, 0) ?>%</span>
+    </div>
+    <div class="flow-card-value" style="font-size: 1.45rem;"><?= bytes_html($memory['used']) ?> <small class="muted">/ <?= bytes_html($memory['total']) ?></small></div>
+    <div style="background: rgba(255, 255, 255, 0.1); border-radius: 999px; height: 8px; overflow: hidden; margin-top: 0.75rem;">
+      <div style="width: <?= min(100, $memPct) ?>%; height: 100%; background: var(--accent-gradient); border-radius: 999px;"></div>
+    </div>
   </div>
-  <div class="card">
-    <div class="card-label">Swap</div>
-    <div class="card-value"><?= bytes_html($memory['swap_used']) ?> <small>/ <?= bytes_html($memory['swap_total']) ?></small></div>
-    <div class="day-bar sys-bar <?= $barClass($swapPct) ?>"><span style="width:<?= min(100, $swapPct) ?>%"></span></div>
+
+  <div class="flow-card">
+    <div class="flow-card-header">
+      <span class="flow-card-title">Swap Storage</span>
+      <span class="tag <?= $barClass($swapPct) ?>"><?= number_format($swapPct, 0) ?>%</span>
+    </div>
+    <div class="flow-card-value" style="font-size: 1.45rem;"><?= bytes_html($memory['swap_used']) ?> <small class="muted">/ <?= bytes_html($memory['swap_total']) ?></small></div>
+    <div style="background: rgba(255, 255, 255, 0.1); border-radius: 999px; height: 8px; overflow: hidden; margin-top: 0.75rem;">
+      <div style="width: <?= min(100, $swapPct) ?>%; height: 100%; background: var(--accent-gradient); border-radius: 999px;"></div>
+    </div>
   </div>
 </div>
 
-<section class="section">
-  <h2 class="section-title"><?= __('استهلاك كل كور') ?></h2>
-  <div class="core-grid">
+<section style="margin-top: 2rem;">
+  <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; color: #ffffff;"><?= __('استهلاك كل كور') ?></h2>
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.75rem;">
     <?php foreach ($cores as $i => $pct): ?>
-      <div class="core-cell">
-        <span class="core-label mono"><?= (int)$i ?></span>
-        <div class="day-bar sys-bar <?= $barClass((float)$pct) ?>"><span style="width:<?= min(100, (float)$pct) ?>%"></span></div>
-        <span class="core-pct mono ltr"><?= number_format((float)$pct, 0) ?>%</span>
+      <div class="flow-card" style="padding: 0.85rem 1rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+          <span class="mono muted">Core #<?= (int)$i ?></span>
+          <span class="mono ltr" style="font-weight: 700; font-size: 0.9rem; color: #ffffff;"><?= number_format((float)$pct, 0) ?>%</span>
+        </div>
+        <div style="background: rgba(255, 255, 255, 0.1); border-radius: 999px; height: 6px; overflow: hidden;">
+          <div style="width: <?= min(100, (float)$pct) ?>%; height: 100%; background: var(--accent-gradient); border-radius: 999px;"></div>
+        </div>
       </div>
     <?php endforeach; ?>
   </div>
 </section>
 
-<section class="section">
-  <h2 class="section-title">💾 <?= __('مساحة السيرفر (البارتشنات)') ?></h2>
+<section style="margin-top: 2.5rem;">
+  <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; color: #ffffff;">💾 <?= __('مساحة السيرفر (البارتشنات)') ?></h2>
   <div class="table-wrap">
     <table class="table">
       <thead>
@@ -79,15 +103,19 @@ layout_start();
       <tbody>
         <?php foreach ($disks as $disk): ?>
           <tr>
-            <td class="mono ltr"><strong><?= e($disk['mount']) ?></strong></td>
+            <td class="mono ltr"><strong style="color: #ffffff;"><?= e($disk['mount']) ?></strong></td>
             <td class="mono ltr"><?= e($disk['source']) ?></td>
             <td class="mono ltr"><?= e($disk['fstype']) ?></td>
             <td class="col-num mono"><?= bytes_html($disk['size']) ?></td>
             <td class="col-num mono"><?= bytes_html($disk['used']) ?></td>
-            <td class="col-num mono"><strong><?= bytes_html($disk['avail']) ?></strong></td>
-            <td style="min-width:160px">
-              <div class="day-bar sys-bar <?= $barClass((float)$disk['pcent']) ?>"><span style="width:<?= min(100, $disk['pcent']) ?>%"></span></div>
-              <span class="mono ltr small"><?= $disk['pcent'] ?>%</span>
+            <td class="col-num mono"><strong style="color: #ffffff;"><?= bytes_html($disk['avail']) ?></strong></td>
+            <td style="min-width: 160px;">
+              <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <div style="flex: 1; background: rgba(255, 255, 255, 0.1); border-radius: 999px; height: 8px; overflow: hidden;">
+                  <div style="width: <?= min(100, $disk['pcent']) ?>%; height: 100%; background: var(--accent-gradient); border-radius: 999px;"></div>
+                </div>
+                <span class="mono ltr small" style="font-weight: 700; color: #ffffff;"><?= $disk['pcent'] ?>%</span>
+              </div>
             </td>
           </tr>
         <?php endforeach; ?>
@@ -96,12 +124,12 @@ layout_start();
   </div>
 </section>
 
-<section class="section">
-  <div class="section-head">
-    <h2>⚙️ <?= __('أعلى العمليات') ?></h2>
-    <div class="quick-days">
-      <a class="chip-day <?= $psort === 'cpu' ? 'is-active' : '' ?>" href="?page=server&amp;psort=cpu<?= $auto ? '&amp;auto=1' : '' ?>">CPU</a>
-      <a class="chip-day <?= $psort === 'mem' ? 'is-active' : '' ?>" href="?page=server&amp;psort=mem<?= $auto ? '&amp;auto=1' : '' ?>"><?= __('الذاكرة') ?></a>
+<section style="margin-top: 2.5rem;">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+    <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: #ffffff;">⚙️ <?= __('أعلى العمليات النشطة') ?></h2>
+    <div style="display: flex; gap: 0.35rem;">
+      <a class="btn btn-sm <?= $psort === 'cpu' ? 'btn-primary' : 'btn-ghost' ?>" href="?page=server&amp;psort=cpu<?= $auto ? '&amp;auto=1' : '' ?>">CPU</a>
+      <a class="btn btn-sm <?= $psort === 'mem' ? 'btn-primary' : 'btn-ghost' ?>" href="?page=server&amp;psort=mem<?= $auto ? '&amp;auto=1' : '' ?>"><?= __('الذاكرة') ?></a>
     </div>
   </div>
   <div class="table-wrap">
@@ -123,12 +151,12 @@ layout_start();
           <tr>
             <td class="col-num mono"><?= (int)$proc['pid'] ?></td>
             <td class="mono ltr"><?= e($proc['user']) ?></td>
-            <td class="col-num mono"><strong><?= number_format($proc['cpu'], 1) ?></strong></td>
+            <td class="col-num mono"><strong style="color: #ffffff;"><?= number_format($proc['cpu'], 1) ?></strong></td>
             <td class="col-num mono"><?= number_format($proc['mem'], 1) ?></td>
             <td class="col-num mono"><?= bytes_html($proc['rss']) ?></td>
             <td class="mono ltr"><?= e($proc['stat']) ?></td>
             <td class="mono ltr"><?= e($proc['etime']) ?></td>
-            <td class="col-sample"><code class="sample mono ltr" title="<?= e($proc['cmd']) ?>"><?= e($proc['cmd']) ?></code></td>
+            <td style="max-width: 320px;"><code class="mono ltr" style="font-size: 0.8rem; word-break: break-all; opacity: 0.85; color: #ffffff;"><?= e($proc['cmd']) ?></code></td>
           </tr>
         <?php endforeach; ?>
       </tbody>
@@ -140,4 +168,4 @@ layout_start();
   <script>setTimeout(function () { location.reload(); }, 5000);</script>
 <?php endif; ?>
 
-<?php layout_end('السيرفر', $flashes); ?>
+<?php layout_end(__('السيرفر والموارد'), $flashes); ?>

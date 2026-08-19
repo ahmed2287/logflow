@@ -136,6 +136,61 @@ switch ($page) {
         ]);
         break;
 
+    /* ------------------------------------------- real-time stream (tail -f) */
+    case 'stream_log':
+        require_login();
+        header('Content-Type: application/json; charset=UTF-8');
+        $rel    = (string)($_GET['file'] ?? '');
+        $offset = max(0, (int)($_GET['offset'] ?? 0));
+        $path   = log_resolve($rel);
+
+        if ($path === null || !file_exists($path)) {
+            echo json_encode(['ok' => false, 'error' => __('الملف غير موجود.')]);
+            exit;
+        }
+
+        clearstatcache(true, $path);
+        $currentSize = (int)filesize($path);
+        $newLines    = [];
+
+        // If file was truncated/rotated, rewind offset
+        if ($currentSize < $offset) {
+            $offset = max(0, $currentSize - 4096);
+        }
+
+        $newOffset = $offset;
+        if ($currentSize > $offset) {
+            $fp = @fopen($path, 'rb');
+            if ($fp !== false) {
+                fseek($fp, $offset, SEEK_SET);
+                $bytesToRead = min(2 * 1024 * 1024, $currentSize - $offset);
+                $newBytes    = fread($fp, $bytesToRead);
+                $newOffset   = ftell($fp);
+                fclose($fp);
+
+                if ($newBytes !== false && $newBytes !== '') {
+                    $rawLines = explode("\n", $newBytes);
+                    // Filter empty trailing lines
+                    foreach ($rawLines as $line) {
+                        if ($line !== '') {
+                            $newLines[] = e($line);
+                        }
+                    }
+                }
+            }
+        }
+
+        echo json_encode([
+            'ok'        => true,
+            'rel'       => $rel,
+            'offset'    => $newOffset,
+            'size'      => $currentSize,
+            'new_lines' => $newLines,
+            'count'     => count($newLines),
+            'mtime'     => (int)filemtime($path),
+        ]);
+        exit;
+
     /* ------------------------------------------- repeat analysis (file) */
     case 'analyze':
         require_login();
@@ -631,6 +686,11 @@ switch ($page) {
                 }
                 $name = trim((string)($row['name'] ?? ''));
                 $path = trim((string)($row['path'] ?? ''));
+                $type = trim((string)($row['type'] ?? 'dir'));
+                if (!in_array($type, ['dir', 'docker'], true)) {
+                    $type = 'dir';
+                }
+
                 // A checked "remove" box or a fully blank row drops the source.
                 if (!empty($row['remove']) || ($name === '' && $path === '')) {
                     continue;
@@ -648,17 +708,24 @@ switch ($page) {
                     $errors[] = __('الاسم مكرر:') . ' ' . $name;
                     continue;
                 }
-                $real = realpath($path);
-                if ($real === false || !is_dir($real)) {
-                    $errors[] = __('المسار غير موجود أو ليس مجلدًا:') . ' ' . $path;
-                    continue;
+
+                if ($type === 'docker') {
+                    $real = realpath($path);
+                    $seen[$key] = true;
+                    $sources[]  = ['name' => $name, 'path' => $real ?: $path, 'type' => 'docker'];
+                } else {
+                    $real = realpath($path);
+                    if ($real === false || !is_dir($real)) {
+                        $errors[] = __('المسار غير موجود أو ليس مجلدًا:') . ' ' . $path;
+                        continue;
+                    }
+                    if (!is_readable($real)) {
+                        $errors[] = __('لا توجد صلاحية قراءة على:') . ' ' . $real;
+                        continue;
+                    }
+                    $seen[$key] = true;
+                    $sources[]  = ['name' => $name, 'path' => $real, 'type' => 'dir'];
                 }
-                if (!is_readable($real)) {
-                    $errors[] = __('لا توجد صلاحية قراءة على:') . ' ' . $real;
-                    continue;
-                }
-                $seen[$key] = true;
-                $sources[]  = ['name' => $name, 'path' => $real];
             }
 
             if ($errors) {
@@ -793,7 +860,7 @@ switch ($page) {
     case 'lang':
         $to = (string)($_GET['to'] ?? '');
         if (in_array($to, APP_LANGS, true)) {
-            setcookie('almasrylog_lang', $to, [
+            setcookie('logflow_lang', $to, [
                 'expires'  => time() + 31536000,
                 'path'     => '/',
                 'samesite' => 'Lax',

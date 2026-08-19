@@ -2,18 +2,18 @@
 
 <div class="page-head">
   <div>
-    <h1><?= $scope === 'mine' ? '🙋 ' . __('سجل نشاطي') : '🕵️ ' . __('سجل نشاط اللوحة') ?></h1>
-    <p class="muted">
+    <h1 class="gradient-title"><?= $scope === 'mine' ? '🙋 ' . __('سجل نشاطي') : '🕵️ ' . __('سجل نشاط اللوحة') ?></h1>
+    <p class="muted" style="margin-top: 0.2rem; font-size: 0.88rem;">
       <?= $scope === 'mine' ? __('سجل نشاطك الشخصي.') : __('كل عمليات المستخدمين — من فعل ماذا ومتى.') ?>
       <?= __('إجمالي') ?> <strong><?= number_format($total) ?></strong> <?= __('عملية.') ?>
     </p>
   </div>
-  <a class="btn btn-ghost" href="?page=dashboard">← <?= __('رجوع') ?></a>
+  <a class="btn btn-primary" href="?page=dashboard">← <?= __('رجوع') ?></a>
 </div>
 
 <?php if ($scope === 'all' && $stats): ?>
-  <section class="section">
-    <h2 class="section-title"><?= __('ملخص الحذف لكل مستخدم') ?></h2>
+  <section style="margin-bottom: 2rem;">
+    <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem;"><?= __('ملخص الحذف لكل مستخدم') ?></h2>
     <div class="table-wrap">
       <table class="table">
         <thead>
@@ -47,9 +47,10 @@
   </section>
 <?php endif; ?>
 
-<form class="toolbar" method="get" action="">
+<form class="saas-toolbar" method="get" action="">
   <input type="hidden" name="page" value="audit">
   <input type="hidden" name="scope" value="<?= e($scope) ?>">
+  
   <?php if ($scope === 'all'): ?>
     <select name="user">
       <option value=""><?= __('كل المستخدمين') ?></option>
@@ -58,17 +59,28 @@
       <?php endforeach; ?>
     </select>
   <?php endif; ?>
+
   <select name="action">
     <option value=""><?= __('كل الإجراءات') ?></option>
     <?php foreach (AUDIT_ACTIONS as $key => $label): ?>
       <option value="<?= e($key) ?>" <?= $filters['action'] === $key ? 'selected' : '' ?>><?= e(__($label)) ?></option>
     <?php endforeach; ?>
   </select>
-  <label class="toolbar-field"><span><?= __('من') ?></span><input type="date" name="from" value="<?= e($filters['from']) ?>"></label>
-  <label class="toolbar-field"><span><?= __('إلى') ?></span><input type="date" name="to" value="<?= e($filters['to']) ?>"></label>
-  <input class="input-search" type="search" name="q" value="<?= e($filters['q']) ?>" placeholder="<?= e(__('ابحث في التفاصيل…')) ?>">
-  <button class="btn btn-ghost" type="submit"><?= __('تصفية') ?></button>
-  <a class="btn btn-ghost" href="?page=audit&amp;scope=<?= e($scope) ?>"><?= __('مسح') ?></a>
+
+  <div style="display: flex; align-items: center; gap: 0.4rem;">
+    <span class="small muted"><?= __('من') ?></span>
+    <input type="date" name="from" value="<?= e($filters['from']) ?>" style="height: 2.6rem;">
+    <span class="small muted"><?= __('إلى') ?></span>
+    <input type="date" name="to" value="<?= e($filters['to']) ?>" style="height: 2.6rem;">
+  </div>
+
+  <div class="search-field">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    <input type="search" name="q" value="<?= e($filters['q']) ?>" placeholder="<?= e(__('ابحث في التفاصيل…')) ?>">
+  </div>
+
+  <button class="btn btn-primary btn-sm" type="submit"><?= __('تصفية') ?></button>
+  <a class="btn btn-ghost btn-sm" href="?page=audit&amp;scope=<?= e($scope) ?>"><?= __('مسح') ?></a>
 </form>
 
 <?php if (!$rows): ?>
@@ -94,15 +106,15 @@
           <?php
             $action  = (string)($row['action'] ?? '');
             $details = is_array($row['details'] ?? null) ? $row['details'] : [];
-            $rowCls  = in_array($action, ['delete_file', 'cleanup'], true) ? 'row-destructive'
-                     : ($action === 'login_failed' ? 'row-warn' : '');
+            $tagStyle = in_array($action, ['delete_file', 'cleanup'], true) ? 'tag-error'
+                      : ($action === 'login_failed' ? 'tag-warn' : 'tag-info');
           ?>
-          <tr class="<?= $rowCls ?>">
+          <tr>
             <td class="col-date mono ltr">
               <?= e(date('Y-m-d H:i:s', strtotime((string)($row['ts'] ?? 'now')))) ?>
             </td>
             <td><strong><?= e((string)($row['user'] ?? '—')) ?></strong></td>
-            <td><span class="tag tag-<?= e($action) ?>"><?= e(__(AUDIT_ACTIONS[$action] ?? $action)) ?></span></td>
+            <td><span class="tag <?= $tagStyle ?>"><?= e(__(AUDIT_ACTIONS[$action] ?? $action)) ?></span></td>
             <td class="col-details">
               <?php if ($action === 'cleanup' && isset($details['before'])): ?>
                 <?= __('حذف السطور الأقدم من') ?> <strong class="ltr"><?= e((string)$details['before']) ?></strong> —
@@ -127,21 +139,7 @@
               <?php endif; ?>
 
               <?php if (!empty($details['src'])): ?>
-                <span class="tag">📁 <?= e((string)$details['src']) ?></span>
-              <?php endif; ?>
-
-              <?php if (!empty($details['files']) && is_array($details['files'])): ?>
-                <details class="files-details">
-                  <summary><?= __('عرض الملفات') ?> (<?= count($details['files']) ?>)</summary>
-                  <ul class="file-list mono ltr">
-                    <?php foreach (array_slice($details['files'], 0, 500) as $file): ?>
-                      <li><?= e((string)$file) ?></li>
-                    <?php endforeach; ?>
-                    <?php if (count($details['files']) > 500): ?>
-                      <li class="muted">… +<?= count($details['files']) - 500 ?></li>
-                    <?php endif; ?>
-                  </ul>
-                </details>
+                <span class="tag tag-info">📁 <?= e((string)$details['src']) ?></span>
               <?php endif; ?>
             </td>
             <td class="col-ip mono ltr muted"><?= e((string)($row['ip'] ?? '—')) ?></td>
@@ -156,7 +154,7 @@
     if ($pages > 1):
       $query = $_GET;
   ?>
-    <nav class="pager">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 1.5rem;">
       <?php if ($page > 1): $query['p'] = $page - 1; ?>
         <a class="btn btn-ghost btn-sm" href="?<?= e(http_build_query($query)) ?>"><?= __('السابق') ?></a>
       <?php endif; ?>
@@ -164,7 +162,7 @@
       <?php if ($page < $pages): $query['p'] = $page + 1; ?>
         <a class="btn btn-ghost btn-sm" href="?<?= e(http_build_query($query)) ?>"><?= __('التالي') ?></a>
       <?php endif; ?>
-    </nav>
+    </div>
   <?php endif; ?>
 <?php endif; ?>
 

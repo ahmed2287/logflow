@@ -13,7 +13,7 @@ function lang(): string
 {
     static $lang = null;
     if ($lang === null) {
-        $cookie = (string)($_COOKIE['almasrylog_lang'] ?? '');
+        $cookie = (string)($_COOKIE['logflow_lang'] ?? $_COOKIE['almasrylog_lang'] ?? '');
         $lang   = in_array($cookie, APP_LANGS, true) ? $cookie : 'ar';
     }
     return $lang;
