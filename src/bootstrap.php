@@ -22,9 +22,12 @@ if (!is_dir(DATA_PATH)) {
 /* ---------------------------------------------------------------- config */
 
 const DEFAULT_CONFIG = [
-    'sources'      => [],            // [{name: "...", path: "/abs/dir"}, ...]
-    'patterns'     => ['*.log', '*.txt'],
-    'recursive'    => true,
+    'sources'      => [
+        ['name' => 'System-Logs', 'path' => '/var/log', 'type' => 'dir'],
+        ['name' => 'Nginx-Log', 'path' => '/var/log/nginx', 'type' => 'dir'],
+    ],
+    'patterns'     => ['*.log', '*.txt', 'syslog*', 'messages*', 'auth*', 'kern*', 'dmesg*', 'dpkg*', 'boot*', 'alternatives*', '*.gz'],
+    'recursive'    => false,
     'tail_lines'   => 500,
     'max_view_mb'  => 20,
 ];

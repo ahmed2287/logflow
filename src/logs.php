@@ -404,6 +404,31 @@ function log_tail(string $path, int $lines = 500): array
         ];
     }
 
+    if (str_ends_with($path, '.gz')) {
+        $zp = @gzopen($path, 'rb');
+        if ($zp) {
+            $decompressed = '';
+            while (!gzeof($zp)) {
+                $chunk = gzread($zp, 8192);
+                if ($chunk === false) break;
+                $decompressed .= $chunk;
+                if (strlen($decompressed) > 10 * 1024 * 1024) break;
+            }
+            gzclose($zp);
+            $linesArray = explode("\n", $decompressed);
+            $truncated  = count($linesArray) > $lines;
+            if ($truncated) {
+                $linesArray = array_slice($linesArray, -$lines);
+            }
+            $content = implode("\n", $linesArray);
+            return [
+                'content'   => $content,
+                'truncated' => $truncated,
+                'size'      => strlen($decompressed),
+            ];
+        }
+    }
+
     $size = filesize($path);
     if ($size === false || $size === 0) {
         return ['content' => '', 'truncated' => false, 'size' => 0];
