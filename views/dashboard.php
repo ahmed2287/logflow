@@ -219,12 +219,13 @@ layout_start();
 
 <!-- 3. Source Tabs & Search Toolbar -->
 <?php if (count($sources) > 1): ?>
-  <nav class="src-tabs" style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+  <nav class="src-tabs" style="display: flex; gap: 0.6rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
     <?php foreach ($sources as $source): ?>
-      <a class="btn <?= $activeSrc && $activeSrc['name'] === $source['name'] ? 'btn-primary' : 'btn-ghost' ?>"
-         href="?page=dashboard&amp;src=<?= urlencode($source['name']) ?>" style="display: inline-flex; align-items: center; gap: 0.45rem;">
-        <svg viewBox="0 0 24 24" fill="rgba(255, 107, 0, 0.25)" stroke="var(--accent)" stroke-width="2" width="18" height="18" style="width: 18px; height: 18px; max-width: 18px; max-height: 18px; flex-shrink: 0; color: var(--accent);"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-        <span><?= e($source['name']) ?></span>
+      <?php $isActive = $activeSrc && $activeSrc['name'] === $source['name']; ?>
+      <a class="btn <?= $isActive ? 'btn-primary is-active-tab' : '' ?>"
+         href="?page=dashboard&amp;src=<?= urlencode($source['name']) ?>">
+        <svg viewBox="0 0 24 24" fill="rgba(255, 255, 255, 0.25)" stroke="#ffffff" stroke-width="2" width="18" height="18" style="width: 18px; height: 18px; max-width: 18px; max-height: 18px; flex-shrink: 0; color: #ffffff;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span style="color: #ffffff; font-weight: 700;"><?= e($source['name']) ?></span>
       </a>
     <?php endforeach; ?>
   </nav>

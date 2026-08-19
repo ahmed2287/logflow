@@ -1432,18 +1432,40 @@ body.auth-body-page .app-main {
   color: #ffffff;
   stroke: #ffffff;
   flex-shrink: 0;
-/* Theme Accent Orange Folder Icons Styling */
-.folder-svg, .src-tabs svg, .table-wrap td svg {
-  color: var(--accent) !important;
-  stroke: var(--accent) !important;
-  fill: rgba(255, 107, 0, 0.2) !important;
-  transition: all 0.2s ease;
+/* Source Folder Tabs - Solid Orange System Buttons with White Folder Icons */
+.src-tabs .btn {
+  background: var(--accent-gradient) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border-radius: var(--radius) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: var(--shadow) !important;
+  opacity: 0.82;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex !align-items: center;
+  gap: 0.5rem;
 }
 
-.src-tabs .btn-primary svg {
+.src-tabs .btn:hover {
+  opacity: 1 !important;
+  transform: translateY(-2px);
+  box-shadow: var(--accent-glow) !important;
+  border-color: #ffffff !important;
+}
+
+.src-tabs .btn.btn-primary,
+.src-tabs .btn.is-active-tab {
+  opacity: 1 !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: var(--accent-glow) !important;
+  transform: translateY(-1px);
+}
+
+.src-tabs .btn svg {
   color: #ffffff !important;
   stroke: #ffffff !important;
   fill: rgba(255, 255, 255, 0.3) !important;
+  flex-shrink: 0;
 }
 
 /* ------------------------------------------------------------ Responsive Breakpoints */
