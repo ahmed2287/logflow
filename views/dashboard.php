@@ -13,8 +13,8 @@ layout_start();
 ?>
 
 <!-- 1. FlowBoard Top 4 Stat Cards with Glowing Sparklines -->
-<div class="flow-cards-grid">
-  <div class="flow-card">
+<div class="flow-cards-grid" style="align-items: start; align-content: start;">
+  <div class="flow-card" style="height: auto; min-height: 0; align-self: start;">
     <div class="flow-card-header">
       <span class="flow-card-title"><?= __('إجمالي اللوجات') ?></span>
       <div class="flow-card-icon-btn">
@@ -40,7 +40,7 @@ layout_start();
     </div>
   </div>
 
-  <div class="flow-card">
+  <div class="flow-card" style="height: auto; min-height: 0; align-self: start;">
     <div class="flow-card-header">
       <span class="flow-card-title"><?= __('إجمالي الحجم') ?></span>
       <div class="flow-card-icon-btn" style="background: rgba(34, 197, 94, 0.15); color: #22c55e;">
@@ -66,7 +66,7 @@ layout_start();
     </div>
   </div>
 
-  <div class="flow-card">
+  <div class="flow-card" style="height: auto; min-height: 0; align-self: start;">
     <div class="flow-card-header">
       <span class="flow-card-title"><?= __('أحدث تعديل') ?></span>
       <div class="flow-card-icon-btn" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
@@ -91,7 +91,7 @@ layout_start();
     </div>
   </div>
 
-  <div class="flow-card">
+  <div class="flow-card" style="height: auto; min-height: 0; align-self: start;">
     <div class="flow-card-header">
       <span class="flow-card-title"><?= __('أقدم ملف') ?></span>
       <div class="flow-card-icon-btn" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">

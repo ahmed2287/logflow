@@ -127,11 +127,10 @@ a:hover { color: #ff8800; text-decoration: none; }
 body.with-nav {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto 1fr;
   grid-template-areas:
     "sidebar header"
-    "sidebar main"
-    "sidebar footer";
+    "sidebar main";
   min-height: 100vh;
 }
 
@@ -482,7 +481,9 @@ body.with-nav {
 .flow-cards-grid, .saas-cards, .cards {
   display: grid;
   gap: 1.25rem;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  align-items: start;
+  align-content: start;
   margin-bottom: 1.75rem;
 }
 
@@ -497,6 +498,9 @@ body.with-nav {
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden;
+  height: auto;
+  min-height: 0;
+  align-self: start;
   transition: all 0.25s ease;
 }
 
