@@ -12,24 +12,21 @@ layout_start();
 <div class="page-head">
   <div>
     <h1 class="gradient-title" style="margin: 0; font-size: 1.6rem;"><?= __('السيرفر') ?> — <span class="mono ltr" style="font-size: 1.3rem; color: var(--text);"><?= e($hostname) ?></span></h1>
-    <p class="muted" style="margin-top: 0.2rem; font-size: 0.88rem;" id="server-uptime-nproc"><?= __('شغال منذ') ?> <?= e(sys_uptime_human($uptime)) ?> · <?= number_format($nproc) ?> <?= __('عملية نشطة') ?></p>
+    <p class="muted" style="margin-top: 0.2rem; font-size: 0.88rem;" id="server-uptime-nproc"><?= __('فعال منذ') ?> <?= e(sys_uptime_human($uptime)) ?> · <?= number_format($nproc) ?> <?= __('عملية نشطة') ?></p>
   </div>
-  <div class="head-actions">
-    <button type="button" class="btn btn-ghost" id="btn-live-server" data-psort="<?= e($psort) ?>" title="<?= e(__('تحديث استهلاك الموارد لايف كل ثانية')) ?>" style="border: 1px solid var(--accent); color: var(--accent); font-weight: 700; gap: 0.45rem; display: inline-flex; align-items: center; border-radius: var(--radius); transition: all 0.2s ease;">
-      <span class="live-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block;"></span>
-      <span class="live-label">▶️ <?= __('تحديث لايف (1 ثانية)') ?></span>
-    </button>
-    <a class="btn btn-primary" href="?page=server&amp;psort=<?= e($psort) ?><?= $auto ? '' : '&amp;auto=1' ?>">
-      <?= $auto ? '⏸ ' . __('إيقاف التحديث التلقائي') : '▶️ ' . __('تحديث تلقائي (كل 5 ثواني)') ?>
-    </a>
+  <div class="head-actions" style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+    <a class="btn" href="?page=dashboard" style="background: rgba(255, 107, 0, 0.15); color: var(--accent); border: 1px solid rgba(255, 107, 0, 0.3); font-weight: 700;">← <?= __('رجوع') ?></a>
     <a class="btn btn-primary" href="?page=server&amp;psort=<?= e($psort) ?><?= $auto ? '&amp;auto=1' : '' ?>">🔄 <?= __('تحديث') ?></a>
-    <a class="btn btn-primary" href="?page=dashboard">← <?= __('رجوع') ?></a>
+    <button type="button" class="btn btn-primary" id="btn-live-server" data-psort="<?= e($psort) ?>" title="<?= e(__('تحديث استهلاك الموارد لايف كل ثانية')) ?>">
+      <span class="live-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block;"></span>
+      <span class="live-label">🔄 <?= __('تحديث تلقائي (كل 5 ثواني)') ?></span>
+    </button>
   </div>
 </div>
 
 <!-- 4 Elevated Metric Cards for Server -->
-<div class="flow-cards-grid">
-  <div class="flow-card">
+<div class="flow-cards-grid" style="align-items: start; align-content: start;">
+  <div class="flow-card" style="height: auto; min-height: 0; align-self: start;">
     <div class="flow-card-header">
       <span class="flow-card-title">CPU Usage</span>
       <span class="tag <?= $barClass((float)($cpu['all'] ?? 0)) ?>"><?= count($cores) ?> <?= __('كور') ?></span>
@@ -40,7 +37,7 @@ layout_start();
     </div>
   </div>
 
-  <div class="flow-card">
+  <div class="flow-card" style="height: auto; min-height: 0; align-self: start;">
     <div class="flow-card-header">
       <span class="flow-card-title">Load Average (1 · 5 · 15)</span>
       <span class="tag tag-info" id="srv-load-badge"><?= count($cores) ? number_format($load['1'] * 100 / count($cores), 0) : 0 ?>% Load</span>
@@ -49,7 +46,7 @@ layout_start();
     <div style="font-size: 0.8rem; margin-top: 0.5rem;" class="muted"><?= __('نسبةً لعدد الكورات الكلي') ?></div>
   </div>
 
-  <div class="flow-card">
+  <div class="flow-card" style="height: auto; min-height: 0; align-self: start;">
     <div class="flow-card-header">
       <span class="flow-card-title"><?= __('الذاكرة (RAM)') ?></span>
       <span class="tag <?= $barClass($memPct) ?>" id="srv-mem-badge"><?= number_format($memPct, 0) ?>%</span>
@@ -60,7 +57,7 @@ layout_start();
     </div>
   </div>
 
-  <div class="flow-card">
+  <div class="flow-card" style="height: auto; min-height: 0; align-self: start;">
     <div class="flow-card-header">
       <span class="flow-card-title">Swap Storage</span>
       <span class="tag <?= $barClass($swapPct) ?>" id="srv-swap-badge"><?= number_format($swapPct, 0) ?>%</span>
@@ -73,13 +70,15 @@ layout_start();
 </div>
 
 <section style="margin-top: 2rem;">
-  <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; color: var(--text);"><?= __('استهلاك كل كور') ?></h2>
-  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.75rem;">
+  <div style="display: flex; align-items: center; justify-content: flex-end; margin-bottom: 1rem;">
+    <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: var(--text);"><?= __('استهلاك كل كور') ?></h2>
+  </div>
+  <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap;">
     <?php foreach ($cores as $i => $pct): ?>
-      <div class="flow-card" style="padding: 0.85rem 1rem;">
+      <div class="flow-card" style="padding: 0.65rem 1rem; width: 160px; height: auto; min-height: 0;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
-          <span class="mono muted">Core #<?= (int)$i ?></span>
-          <span class="mono ltr" id="srv-core-val-<?= (int)$i ?>" style="font-weight: 700; font-size: 0.9rem; color: var(--text);"><?= number_format((float)$pct, 0) ?>%</span>
+          <span class="mono muted" style="font-size: 0.8rem;">Core #<?= (int)$i ?></span>
+          <span class="mono ltr" id="srv-core-val-<?= (int)$i ?>" style="font-weight: 700; font-size: 0.88rem; color: var(--text);"><?= number_format((float)$pct, 0) ?>%</span>
         </div>
         <div style="background: rgba(255, 255, 255, 0.1); border-radius: 999px; height: 6px; overflow: hidden;">
           <div id="srv-core-bar-<?= (int)$i ?>" style="width: <?= min(100, (float)$pct) ?>%; height: 100%; background: var(--accent-gradient); border-radius: 999px; transition: width 0.3s ease;"></div>
@@ -95,7 +94,7 @@ layout_start();
     <table class="table">
       <thead>
         <tr>
-          <th><?= __('نقطة التركيب') ?></th>
+          <th><?= __('نقطة الأرشيف') ?></th>
           <th><?= __('الجهاز') ?></th>
           <th><?= __('النظام') ?></th>
           <th class="col-num"><?= __('الحجم') ?></th>
