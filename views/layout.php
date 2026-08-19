@@ -34,7 +34,11 @@ window.APP_I18N = {
   synced: <?= json_encode(__('متطابقين (مُتزامن)')) ?>,
   offsetHours: <?= json_encode(__('فرق %d ساعة')) ?>,
   startLiveStream: <?= json_encode(__('▶️ بث مباشر')) ?>,
-  stopLiveStream: <?= json_encode(__('⏸ إيقاف البث')) ?>
+  stopLiveStream: <?= json_encode(__('⏸ إيقاف البث')) ?>,
+  startLiveServer: <?= json_encode(__('▶️ تحديث لايف (1 ثانية)')) ?>,
+  stopLiveServer: <?= json_encode(__('⏸ إيقاف التحديث')) ?>,
+  runningSince: <?= json_encode(__('شغال منذ')) ?>,
+  activeProcess: <?= json_encode(__('عملية نشطة')) ?>
 };
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">

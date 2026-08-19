@@ -166,6 +166,10 @@ return [
     'إيقاف البث'             => 'Pause Live Stream',
     '▶️ بث مباشر'            => '▶️ Live Stream',
     '⏸ إيقاف البث'           => '⏸ Pause Live Stream',
+    'تحديث استهلاك الموارد لايف كل ثانية' => 'Live resource consumption refresh (every 1 sec)',
+    '▶️ تحديث لايف (1 ثانية)' => '▶️ Live Refresh (1 sec)',
+    '⏸ إيقاف التحديث'        => '⏸ Pause Live Refresh',
+    'تحديث لايف (1 ثانية)'    => 'Live Refresh (1 sec)',
     'الملف غير موجود أو غير مسموح بالوصول إليه.' => 'File not found or access denied.',
     'الملف غير موجود.'       => 'File not found.',
 

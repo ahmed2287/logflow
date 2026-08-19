@@ -414,4 +414,111 @@
 
     liveBtn.addEventListener('click', toggleLiveStream);
   }
+
+  /* --- Real-Time Live Server Monitor (1-second Interval) --- */
+  var liveServerBtn = document.getElementById('btn-live-server');
+  if (liveServerBtn) {
+    var isLiveServer  = false;
+    var serverTimer   = null;
+    var psort         = liveServerBtn.getAttribute('data-psort') || 'cpu';
+    var liveDot       = liveServerBtn.querySelector('.live-dot');
+    var liveLabel     = liveServerBtn.querySelector('.live-label');
+
+    var pollServerMetrics = function () {
+      fetch('?page=stream_server&psort=' + encodeURIComponent(psort))
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (!data || !data.ok) return;
+
+          // 1. CPU Usage
+          var cpuVal = document.getElementById('srv-cpu-val');
+          var cpuBar = document.getElementById('srv-cpu-bar');
+          if (cpuVal) cpuVal.textContent = data.cpu_all + '%';
+          if (cpuBar) cpuBar.style.width = data.cpu_bar + '%';
+
+          // 2. Load Average
+          var loadVal = document.getElementById('srv-load-val');
+          var loadBadge = document.getElementById('srv-load-badge');
+          if (loadVal) loadVal.textContent = data.load1 + ' · ' + data.load5 + ' · ' + data.load15;
+          if (loadBadge) loadBadge.textContent = data.load_pct + '% Load';
+
+          // 3. Memory RAM
+          var memVal = document.getElementById('srv-mem-val');
+          var memBar = document.getElementById('srv-mem-bar');
+          var memBadge = document.getElementById('srv-mem-badge');
+          if (memVal) memVal.innerHTML = data.mem_used + ' <small class="muted">/ ' + data.mem_total + '</small>';
+          if (memBar) memBar.style.width = data.mem_pct + '%';
+          if (memBadge) memBadge.textContent = data.mem_pct + '%';
+
+          // 4. Swap Storage
+          var swapVal = document.getElementById('srv-swap-val');
+          var swapBar = document.getElementById('srv-swap-bar');
+          var swapBadge = document.getElementById('srv-swap-badge');
+          if (swapVal) swapVal.innerHTML = data.swap_used + ' <small class="muted">/ ' + data.swap_total + '</small>';
+          if (swapBar) swapBar.style.width = data.swap_pct + '%';
+          if (swapBadge) swapBadge.textContent = data.swap_pct + '%';
+
+          // 5. Uptime & Active Process Count
+          var uptimeNproc = document.getElementById('server-uptime-nproc');
+          if (uptimeNproc) {
+            uptimeNproc.textContent = (I18N.runningSince || 'شغال منذ') + ' ' + data.uptime + ' · ' + data.nproc + ' ' + (I18N.activeProcess || 'عملية نشطة');
+          }
+
+          // 6. Individual Cores
+          if (data.cores && data.cores.length > 0) {
+            data.cores.forEach(function (c) {
+              var coreVal = document.getElementById('srv-core-val-' + c.id);
+              var coreBar = document.getElementById('srv-core-bar-' + c.id);
+              if (coreVal) coreVal.textContent = c.pct + '%';
+              if (coreBar) coreBar.style.width = Math.min(100, c.pct) + '%';
+            });
+          }
+
+          // 7. Top Active Processes Table
+          var procsTbody = document.getElementById('srv-procs-tbody');
+          if (procsTbody && data.procs && data.procs.length > 0) {
+            var html = '';
+            data.procs.forEach(function (p) {
+              html += '<tr>' +
+                '<td class="col-num mono">' + p.pid + '</td>' +
+                '<td class="mono ltr">' + p.user + '</td>' +
+                '<td class="col-num mono"><strong style="color: var(--text);">' + p.cpu + '</strong></td>' +
+                '<td class="col-num mono">' + p.mem + '</td>' +
+                '<td class="col-num mono">' + p.rss + '</td>' +
+                '<td class="mono ltr">' + p.stat + '</td>' +
+                '<td class="mono ltr">' + p.etime + '</td>' +
+                '<td style="max-width: 320px;"><code class="mono ltr" style="font-size: 0.8rem; word-break: break-all; opacity: 0.85; color: var(--text);">' + p.cmd + '</code></td>' +
+              '</tr>';
+            });
+            procsTbody.innerHTML = html;
+          }
+        })
+        .catch(function (err) {
+          console.warn('Live server metrics polling error:', err);
+        });
+    };
+
+    var toggleLiveServer = function () {
+      isLiveServer = !isLiveServer;
+      if (isLiveServer) {
+        liveServerBtn.style.background = 'var(--accent-gradient)';
+        liveServerBtn.style.color = '#ffffff';
+        liveServerBtn.style.boxShadow = 'var(--accent-glow)';
+        if (liveDot) { liveDot.style.background = '#22c55e'; liveDot.className = 'pulse-dot-green'; }
+        if (liveLabel) liveLabel.textContent = I18N.stopLiveServer || '⏸ Pause Live Refresh';
+
+        pollServerMetrics();
+        serverTimer = setInterval(pollServerMetrics, 1000);
+      } else {
+        clearInterval(serverTimer);
+        liveServerBtn.style.background = '';
+        liveServerBtn.style.color = 'var(--accent)';
+        liveServerBtn.style.boxShadow = '';
+        if (liveDot) { liveDot.style.background = '#22c55e'; liveDot.className = ''; }
+        if (liveLabel) liveLabel.textContent = I18N.startLiveServer || '▶️ Live Refresh (1 sec)';
+      }
+    };
+
+    liveServerBtn.addEventListener('click', toggleLiveServer);
+  }
 })();

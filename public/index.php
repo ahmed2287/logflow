@@ -856,6 +856,67 @@ switch ($page) {
         ]);
         break;
 
+    /* ------------------------------------------- real-time server stream (1s) */
+    case 'stream_server':
+        require_login();
+        header('Content-Type: application/json; charset=UTF-8');
+        $psort = (string)($_GET['psort'] ?? 'cpu') === 'mem' ? 'mem' : 'cpu';
+
+        $load   = sys_load();
+        $cpu    = sys_cpu_usage();
+        $memory = sys_memory();
+        $uptime = sys_uptime();
+        $procs  = sys_processes($psort);
+        $nproc  = sys_process_count();
+        $cores  = array_filter($cpu, fn($k) => $k !== 'all', ARRAY_FILTER_USE_KEY);
+        $coreCount = count($cores);
+        $memPct = $memory['total'] ? round($memory['used'] * 100 / $memory['total'], 1) : 0;
+        $swapPct = $memory['swap_total'] ? round($memory['swap_used'] * 100 / $memory['swap_total'], 1) : 0;
+
+        $coreList = [];
+        foreach ($cores as $idx => $pct) {
+            $coreList[] = [
+                'id'  => (int)$idx,
+                'pct' => round((float)$pct, 1),
+            ];
+        }
+
+        $procList = [];
+        foreach ($procs as $p) {
+            $procList[] = [
+                'pid'   => (int)$p['pid'],
+                'user'  => e($p['user']),
+                'cpu'   => number_format((float)$p['cpu'], 1),
+                'mem'   => number_format((float)$p['mem'], 1),
+                'rss'   => bytes_html((int)$p['rss']),
+                'stat'  => e($p['stat']),
+                'etime' => e($p['etime']),
+                'cmd'   => e($p['cmd']),
+            ];
+        }
+
+        echo json_encode([
+            'ok'        => true,
+            'cpu_all'   => number_format((float)($cpu['all'] ?? 0), 1),
+            'cpu_bar'   => min(100, (float)($cpu['all'] ?? 0)),
+            'load1'     => number_format((float)$load['1'], 2),
+            'load5'     => number_format((float)$load['5'], 2),
+            'load15'    => number_format((float)$load['15'], 2),
+            'load_pct'  => $coreCount ? round($load['1'] * 100 / $coreCount) : 0,
+            'mem_used'  => bytes_html((int)$memory['used']),
+            'mem_total' => bytes_html((int)$memory['total']),
+            'mem_pct'   => $memPct,
+            'swap_used' => bytes_html((int)$memory['swap_used']),
+            'swap_total'=> bytes_html((int)$memory['swap_total']),
+            'swap_pct'  => $swapPct,
+            'uptime'    => sys_uptime_human($uptime),
+            'nproc'     => number_format($nproc),
+            'cores'     => $coreList,
+            'procs'     => $procList,
+            'timestamp' => date('H:i:s'),
+        ]);
+        exit;
+
     /* --------------------------------------------------------- language */
     case 'lang':
         $to = (string)($_GET['to'] ?? '');
