@@ -121,7 +121,7 @@ summary { list-style: none; cursor: pointer; }
     <a href="?page=server" class="btn btn-primary btn-sm btn-block"><?= __('عرض الموارد') ?></a>
   </div>
 
-  <div class="sidebar-footer">
+  <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 0.75rem;">
     <a href="?page=account" class="user-chip" title="<?= e(__('حسابي')) ?>">
       <div class="user-avatar"><?= strtoupper(substr($me['username'] ?? 'H', 0, 1)) ?></div>
       <div class="user-info">
@@ -132,6 +132,10 @@ summary { list-style: none; cursor: pointer; }
         <div class="user-role"><?= e(__(ROLES[$me['role'] ?? ''] ?? $me['role'] ?? '')) ?></div>
       </div>
     </a>
+
+    <div style="font-size: 0.72rem; text-align: center; color: var(--text-muted); padding-top: 0.5rem; border-top: 1px solid var(--border);">
+      Made with ❤️ by <a href="https://viber-solutions.com" target="_blank" rel="noopener noreferrer" style="color: var(--accent); font-weight: 800; text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Viber Solutions</a> 🚀
+    </div>
   </div>
 </aside>
 
@@ -214,19 +218,11 @@ summary { list-style: none; cursor: pointer; }
 
   <?= $content ?>
 
-  <footer class="app-footer" style="margin-top: 3.5rem; padding: 1.25rem 0 0.5rem; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; font-size: 0.84rem; color: var(--text-muted);">
-    <div style="display: flex; align-items: center; gap: 0.4rem;">
-      <span>⚡ <strong style="color: var(--text);">LogFlow v2.5</strong></span>
-      <span>·</span>
-      <span><?= __('نظام إدارة ومتابعة اللوجات والسيرفر') ?></span>
+  <?php if ($page === 'login' || $page === 'setup'): ?>
+    <div style="margin-top: 1.5rem; text-align: center; font-size: 0.78rem; color: var(--text-muted);">
+      Made with ❤️ by <a href="https://viber-solutions.com" target="_blank" rel="noopener noreferrer" style="color: var(--accent); font-weight: 800; text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Viber Solutions</a> 🚀
     </div>
-    <div>
-      <?= __('Made with ❤️ by') ?>
-      <a href="https://viber-solutions.com" target="_blank" rel="noopener noreferrer" style="color: var(--accent); font-weight: 800; text-decoration: none; transition: opacity 0.2s ease;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
-        Viber Solutions 🚀
-      </a>
-    </div>
-  </footer>
+  <?php endif; ?>
 </main>
 
 <script>
