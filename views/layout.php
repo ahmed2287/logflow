@@ -212,14 +212,21 @@ summary { list-style: none; cursor: pointer; }
 </header>
 <?php endif; ?>
 
-<main class="app-main">
-  <?php foreach ($flashes as $flash): ?>
-    <div class="alert alert-<?= e($flash['type']) ?>" style="margin-bottom: 1.5rem;">
-      <?= e($flash['msg']) ?>
-    </div>
-  <?php endforeach; ?>
-
   <?= $content ?>
+
+  <footer class="app-footer" style="margin-top: 3.5rem; padding: 1.25rem 0 0.5rem; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; font-size: 0.84rem; color: var(--text-muted);">
+    <div style="display: flex; align-items: center; gap: 0.4rem;">
+      <span>⚡ <strong style="color: var(--text);">LogFlow v2.5</strong></span>
+      <span>·</span>
+      <span><?= __('نظام إدارة ومتابعة اللوجات والسيرفر') ?></span>
+    </div>
+    <div>
+      <?= __('Made with ❤️ by') ?>
+      <a href="https://viber-solutions.com" target="_blank" rel="noopener noreferrer" style="color: var(--accent); font-weight: 800; text-decoration: none; transition: opacity 0.2s ease;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+        Viber Solutions 🚀
+      </a>
+    </div>
+  </footer>
 </main>
 
 <script>

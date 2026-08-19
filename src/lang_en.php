@@ -184,6 +184,8 @@ return [
     'الترتيب حسب: الحجم'    => 'Sort by: Size',
     'الترتيب حسب: الاسم'    => 'Sort by: Name',
     'تطبيق الفلتر'          => 'Apply Filter',
+    'نظام إدارة ومتابعة اللوجات والسيرفر' => 'Log & Server Monitoring System',
+    'Made with ❤️ by'       => 'Made with ❤️ by',
     'الملف غير موجود أو غير مسموح بالوصول إليه.' => 'File not found or access denied.',
     'الملف غير موجود.'       => 'File not found.',
 
