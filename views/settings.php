@@ -33,7 +33,7 @@ layout_start();
           <input type="text" name="sources[<?= $i ?>][name]" value="<?= e($source['name']) ?>"
                  class="source-name" placeholder="<?= e(__('الاسم')) ?>" maxlength="40" style="width: 160px;">
           <select name="sources[<?= $i ?>][type]" class="source-type" style="width: 155px; font-size: 0.84rem;">
-            <option value="dir" <?= $stype === 'dir' ? 'selected' : '' ?>>📁 <?= __('مجلد لوجات') ?></option>
+            <option value="dir" <?= $stype === 'dir' ? 'selected' : '' ?>>📂 <?= __('مجلد لوجات') ?></option>
             <option value="docker" <?= $stype === 'docker' ? 'selected' : '' ?>>🐳 <?= __('دوكر كومبوز') ?></option>
           </select>
           <input type="text" name="sources[<?= $i ?>][path]" value="<?= e($source['path']) ?>"
@@ -47,7 +47,7 @@ layout_start();
       <div class="source-row" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
         <input type="text" name="sources[new0][name]" class="source-name" placeholder="<?= e(__('اسم مسار جديد')) ?>" maxlength="40" style="width: 160px;">
         <select name="sources[new0][type]" class="source-type" style="width: 155px; font-size: 0.84rem;">
-          <option value="dir">📁 <?= __('مجلد لوجات') ?></option>
+          <option value="dir">📂 <?= __('مجلد لوجات') ?></option>
           <option value="docker">🐳 <?= __('دوكر كومبوز') ?></option>
         </select>
         <input type="text" name="sources[new0][path]" class="mono ltr source-path" placeholder="/var/log/myapp <?= __('أو') ?> /app/docker-compose.yml" dir="ltr" style="flex: 1; min-width: 220px;">

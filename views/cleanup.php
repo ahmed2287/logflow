@@ -15,10 +15,13 @@ layout_start();
 </div>
 
 <?php if (count($sources) > 1): ?>
-  <nav class="src-tabs">
+  <nav class="src-tabs" style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
     <?php foreach ($sources as $source): ?>
-      <a class="src-tab <?= $active && $active['name'] === $source['name'] ? 'is-active' : '' ?>"
-         href="?page=cleanup&amp;src=<?= urlencode($source['name']) ?>">📁 <?= e($source['name']) ?></a>
+      <a class="btn <?= $active && $active['name'] === $source['name'] ? 'btn-primary' : 'btn-ghost' ?>"
+         href="?page=cleanup&amp;src=<?= urlencode($source['name']) ?>" style="display: inline-flex; align-items: center; gap: 0.45rem;">
+        <svg viewBox="0 0 24 24" fill="rgba(255, 107, 0, 0.25)" stroke="var(--accent)" stroke-width="2" width="18" height="18" style="width: 18px; height: 18px; max-width: 18px; max-height: 18px; flex-shrink: 0; color: var(--accent);"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span><?= e($source['name']) ?></span>
+      </a>
     <?php endforeach; ?>
   </nav>
 <?php endif; ?>
@@ -44,7 +47,10 @@ layout_start();
           <?php foreach ($pending as $req): ?>
             <tr>
               <td><strong><?= e($req['user']) ?></strong></td>
-              <td>📁 <?= e($req['src']) ?></td>
+              <td style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                <svg viewBox="0 0 24 24" fill="rgba(255, 107, 0, 0.25)" stroke="var(--accent)" stroke-width="2" width="16" height="16" style="width: 16px; height: 16px; flex-shrink: 0; color: var(--accent);"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                <span><?= e($req['src']) ?></span>
+              </td>
               <td class="mono ltr"><?= $req['target'] === '*' ? '<strong>' . __('كل الملفات') . '</strong>' : e($req['target']) ?></td>
               <td class="col-date mono ltr"><?= e($req['before']) ?></td>
               <td class="col-num mono"><strong><?= number_format((int)($req['preview']['lines'] ?? 0)) ?></strong></td>

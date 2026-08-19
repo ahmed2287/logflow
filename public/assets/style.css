@@ -1432,6 +1432,18 @@ body.auth-body-page .app-main {
   color: #ffffff;
   stroke: #ffffff;
   flex-shrink: 0;
+/* Theme Accent Orange Folder Icons Styling */
+.folder-svg, .src-tabs svg, .table-wrap td svg {
+  color: var(--accent) !important;
+  stroke: var(--accent) !important;
+  fill: rgba(255, 107, 0, 0.2) !important;
+  transition: all 0.2s ease;
+}
+
+.src-tabs .btn-primary svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  fill: rgba(255, 255, 255, 0.3) !important;
 }
 
 /* ------------------------------------------------------------ Responsive Breakpoints */
