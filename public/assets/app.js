@@ -415,14 +415,19 @@
     liveBtn.addEventListener('click', toggleLiveStream);
   }
 
-  /* --- Real-Time Live Server Monitor (1-second Interval) --- */
+  /* --- Real-Time Live Server Monitor (1s / 0.5s / 2s Interval) --- */
   var liveServerBtn = document.getElementById('btn-live-server');
+  var speedSelect   = document.getElementById('server-stream-speed');
   if (liveServerBtn) {
-    var isLiveServer  = false;
+    var isLiveServer  = true;
     var serverTimer   = null;
     var psort         = liveServerBtn.getAttribute('data-psort') || 'cpu';
     var liveDot       = liveServerBtn.querySelector('.live-dot');
     var liveLabel     = liveServerBtn.querySelector('.live-label');
+
+    var getIntervalSpeed = function () {
+      return speedSelect ? parseInt(speedSelect.value, 10) || 1000 : 1000;
+    };
 
     var pollServerMetrics = function () {
       fetch('?page=stream_server&psort=' + encodeURIComponent(psort))
@@ -461,7 +466,7 @@
           // 5. Uptime & Active Process Count
           var uptimeNproc = document.getElementById('server-uptime-nproc');
           if (uptimeNproc) {
-            uptimeNproc.textContent = (I18N.runningSince || 'شغال منذ') + ' ' + data.uptime + ' · ' + data.nproc + ' ' + (I18N.activeProcess || 'عملية نشطة');
+            uptimeNproc.textContent = (I18N.runningSince || 'فعال منذ') + ' ' + data.uptime + ' · ' + data.nproc + ' ' + (I18N.activeProcess || 'عملية نشطة');
           }
 
           // 6. Individual Cores
@@ -511,28 +516,45 @@
         });
     };
 
-    var toggleLiveServer = function () {
-      isLiveServer = !isLiveServer;
-      if (isLiveServer) {
-        liveServerBtn.style.background = 'var(--accent-gradient)';
-        liveServerBtn.style.color = '#ffffff';
-        liveServerBtn.style.boxShadow = 'var(--accent-glow)';
-        if (liveDot) { liveDot.style.background = '#22c55e'; liveDot.className = 'pulse-dot-green'; }
-        if (liveLabel) liveLabel.textContent = I18N.stopLiveServer || '⏸ Pause Live Refresh';
-
-        pollServerMetrics();
-        serverTimer = setInterval(pollServerMetrics, 1000);
-      } else {
-        clearInterval(serverTimer);
-        liveServerBtn.style.background = '';
-        liveServerBtn.style.color = 'var(--accent)';
-        liveServerBtn.style.boxShadow = '';
-        if (liveDot) { liveDot.style.background = '#22c55e'; liveDot.className = ''; }
-        if (liveLabel) liveLabel.textContent = I18N.startLiveServer || '▶️ Live Refresh (1 sec)';
-      }
+    var startStreamTimer = function () {
+      if (serverTimer) clearInterval(serverTimer);
+      pollServerMetrics();
+      serverTimer = setInterval(pollServerMetrics, getIntervalSpeed());
+      isLiveServer = true;
+      liveServerBtn.style.background = 'var(--accent-gradient)';
+      liveServerBtn.style.color = '#ffffff';
+      liveServerBtn.style.boxShadow = 'var(--accent-glow)';
+      if (liveDot) { liveDot.style.background = '#22c55e'; liveDot.className = 'pulse-dot-green'; }
+      if (liveLabel) liveLabel.textContent = I18N.stopLiveServer || '⏸ إيقاف البث المباشر';
     };
 
-    liveServerBtn.addEventListener('click', toggleLiveServer);
+    var stopStreamTimer = function () {
+      if (serverTimer) clearInterval(serverTimer);
+      isLiveServer = false;
+      liveServerBtn.style.background = '';
+      liveServerBtn.style.color = 'var(--accent)';
+      liveServerBtn.style.boxShadow = '';
+      if (liveDot) { liveDot.style.background = '#ef4444'; liveDot.className = ''; }
+      if (liveLabel) liveLabel.textContent = I18N.startLiveServer || '▶️ تشغيل البث المباشر';
+    };
+
+    liveServerBtn.addEventListener('click', function () {
+      if (isLiveServer) {
+        stopStreamTimer();
+      } else {
+        startStreamTimer();
+      }
+    });
+
+    if (speedSelect) {
+      speedSelect.addEventListener('change', function () {
+        if (isLiveServer) {
+          startStreamTimer();
+        }
+      });
+    }
+
+    startStreamTimer();
   }
 
   // Global click delegation for Collapsible Process Command Expander

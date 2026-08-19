@@ -216,22 +216,23 @@ summary { list-style: none; cursor: pointer; }
 </header>
 <?php endif; ?>
 
+<?php $isAuthPage = ($page === 'login' || $page === 'setup'); ?>
+<?php if (!$isAuthPage): ?><main class="app-main"><?php endif; ?>
+
+  <?php foreach ($flashes as $flash): ?>
+    <div class="alert alert-<?= e($flash['type']) ?>"><?= e($flash['msg']) ?></div>
+  <?php endforeach; ?>
+
   <?= $content ?>
 
-  <?php if ($page === 'login' || $page === 'setup'): ?>
+<?php if (!$isAuthPage): ?></main><?php endif; ?>
+
+  <?php if ($isAuthPage): ?>
     <div style="margin-top: 1.5rem; text-align: center; font-size: 0.78rem; color: var(--text-muted);">
       Made with ❤️ by <a href="https://viber-solutions.com" target="_blank" rel="noopener noreferrer" style="color: var(--accent); font-weight: 800; text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Viber Solutions</a> 🚀
     </div>
   <?php endif; ?>
-</main>
 
-<script>
-window.APP_I18N = {
-  title: <?= json_encode(__('تأكيد العملية')) ?>,
-  yes: <?= json_encode(__('نعم، نفّذ')) ?>,
-  cancel: <?= json_encode(__('إلغاء')) ?>
-};
-</script>
 <script src="assets/app.js?v=<?= filemtime(__DIR__ . '/../public/assets/app.js') ?>"></script>
 </body>
 </html>

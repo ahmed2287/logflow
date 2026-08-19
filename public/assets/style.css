@@ -482,8 +482,8 @@ body.with-nav {
   display: grid;
   gap: 1.25rem;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  align-items: start;
-  align-content: start;
+  /* stretch: every stat card in the row shares the tallest card's height */
+  align-items: stretch;
   margin-bottom: 1.75rem;
 }
 
@@ -496,11 +496,8 @@ body.with-nav {
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   overflow: hidden;
-  height: auto;
-  min-height: 0;
-  align-self: start;
   transition: all 0.25s ease;
 }
 
@@ -554,9 +551,59 @@ body.with-nav {
 .trend-down { color: var(--danger); }
 
 .flow-sparkline {
-  margin-top: 0.85rem;
+  /* spacing lives on .flow-card-foot; a margin here would push the svg
+     out of its 40px clipping wrapper and shear off the bottom of the curve */
   height: 40px;
   width: 100%;
+}
+
+/* Pins the last block (sparkline / progress bar / caption) to the card's
+   bottom edge, so cards with different amounts of text still line up. */
+.flow-card-foot {
+  margin-top: auto;
+  padding-top: 0.85rem;
+}
+
+.flow-spark-wrap {
+  width: 100%;
+  height: 40px;
+  max-height: 40px;
+  overflow: hidden;
+}
+
+.flow-progress {
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="light"] .flow-progress {
+  background: rgba(15, 23, 42, 0.1);
+}
+
+.flow-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent-gradient);
+  transition: width 0.3s ease;
+}
+
+/* Per-core tiles. Shares the stat grid's gap and sits in the same container,
+   so the row spans exactly the same left/right bounds as the four cards above.
+   At the 1400px max content width this resolves to 8 columns — double the four
+   stat cards, so every 2nd tile edge lines up with a stat-card edge. */
+.core-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .core-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+  }
 }
 
 /* ------------------------------------------------------------ FlowBoard Dashboard Widgets */
@@ -1460,3 +1507,29 @@ body.auth-body-page .app-main {
   border-color: var(--accent);
   background: var(--surface);
 }
+
+/* ------------------------------------------------------------ Alerts / Flash Messages */
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  border-radius: var(--radius);
+  border: 1px solid currentColor;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.alert-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.alert-success { background: var(--success-soft); color: var(--success); }
+.alert-error   { background: var(--danger-soft);  color: var(--danger); }
+.alert-warn    { background: var(--warn-soft);    color: var(--warn); }
+.alert-info    { background: var(--accent-soft);  color: var(--accent); }

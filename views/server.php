@@ -16,72 +16,76 @@ layout_start();
   </div>
   <div class="head-actions" style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
     <a class="btn" href="?page=dashboard" style="background: rgba(255, 107, 0, 0.15); color: var(--accent); border: 1px solid rgba(255, 107, 0, 0.3); font-weight: 700;">← <?= __('رجوع') ?></a>
-    <a class="btn btn-primary" href="?page=server&amp;psort=<?= e($psort) ?><?= $auto ? '&amp;auto=1' : '' ?>">🔄 <?= __('تحديث') ?></a>
-    <button type="button" class="btn btn-primary" id="btn-live-server" data-psort="<?= e($psort) ?>" title="<?= e(__('تحديث استهلاك الموارد لايف كل ثانية')) ?>">
-      <span class="live-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block;"></span>
-      <span class="live-label">🔄 <?= __('تحديث تلقائي (كل 5 ثواني)') ?></span>
+    
+    <select id="server-stream-speed" style="height: 38px; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--border-strong); color: var(--text); font-weight: 700; font-size: 0.84rem; padding: 0 0.6rem; cursor: pointer;">
+      <option value="1000" selected>⚡ <?= __('بث مباشر (كل 1 ثانية)') ?></option>
+      <option value="500">⚡ <?= __('بث مباشر سريع (كل 0.5 ثانية)') ?></option>
+      <option value="2000">⚡ <?= __('بث مباشر (كل 2 ثانية)') ?></option>
+    </select>
+
+    <button type="button" class="btn btn-primary" id="btn-live-server" data-psort="<?= e($psort) ?>" title="<?= e(__('تشغيل / إيقاف البث المباشر')) ?>">
+      <span class="live-dot pulse-dot-green" style="width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block;"></span>
+      <span class="live-label">🔴 <?= __('بث مباشر شغال') ?></span>
     </button>
   </div>
 </div>
 
 <!-- 4 Elevated Metric Cards for Server -->
-<div class="flow-cards-grid" style="align-items: start; align-content: start;">
-  <div class="flow-card" style="height: auto; min-height: 0; align-self: start;">
+<div class="flow-cards-grid">
+  <div class="flow-card">
     <div class="flow-card-header">
       <span class="flow-card-title">CPU Usage</span>
       <span class="tag <?= $barClass((float)($cpu['all'] ?? 0)) ?>"><?= count($cores) ?> <?= __('كور') ?></span>
     </div>
     <div class="flow-card-value" id="srv-cpu-val"><?= number_format((float)($cpu['all'] ?? 0), 1) ?>%</div>
-    <div style="background: rgba(255, 255, 255, 0.1); border-radius: 999px; height: 8px; overflow: hidden; margin-top: 0.75rem;">
-      <div id="srv-cpu-bar" style="width: <?= min(100, (float)($cpu['all'] ?? 0)) ?>%; height: 100%; background: var(--accent-gradient); border-radius: 999px; transition: width 0.3s ease;"></div>
-    </div>
+    <div class="flow-card-foot"><div class="flow-progress">
+      <div id="srv-cpu-bar" class="flow-progress-fill" style="width: <?= min(100, (float)($cpu['all'] ?? 0)) ?>%;"></div>
+    </div></div>
   </div>
 
-  <div class="flow-card" style="height: auto; min-height: 0; align-self: start;">
+  <div class="flow-card">
     <div class="flow-card-header">
       <span class="flow-card-title">Load Average (1 · 5 · 15)</span>
       <span class="tag tag-info" id="srv-load-badge"><?= count($cores) ? number_format($load['1'] * 100 / count($cores), 0) : 0 ?>% Load</span>
     </div>
     <div class="flow-card-value ltr" id="srv-load-val" style="font-size: 1.5rem;"><?= number_format($load['1'], 2) ?> · <?= number_format($load['5'], 2) ?> · <?= number_format($load['15'], 2) ?></div>
-    <div style="font-size: 0.8rem; margin-top: 0.5rem;" class="muted"><?= __('نسبةً لعدد الكورات الكلي') ?></div>
+    <div class="muted flow-card-foot" style="font-size: 0.8rem;"><?= __('نسبةً لعدد الكورات الكلي') ?></div>
   </div>
 
-  <div class="flow-card" style="height: auto; min-height: 0; align-self: start;">
+  <div class="flow-card">
     <div class="flow-card-header">
       <span class="flow-card-title"><?= __('الذاكرة (RAM)') ?></span>
       <span class="tag <?= $barClass($memPct) ?>" id="srv-mem-badge"><?= number_format($memPct, 0) ?>%</span>
     </div>
     <div class="flow-card-value" id="srv-mem-val" style="font-size: 1.45rem;"><?= bytes_html($memory['used']) ?> <small class="muted">/ <?= bytes_html($memory['total']) ?></small></div>
-    <div style="background: rgba(255, 255, 255, 0.1); border-radius: 999px; height: 8px; overflow: hidden; margin-top: 0.75rem;">
-      <div id="srv-mem-bar" style="width: <?= min(100, $memPct) ?>%; height: 100%; background: var(--accent-gradient); border-radius: 999px; transition: width 0.3s ease;"></div>
-    </div>
+    <div class="flow-card-foot"><div class="flow-progress">
+      <div id="srv-mem-bar" class="flow-progress-fill" style="width: <?= min(100, $memPct) ?>%;"></div>
+    </div></div>
   </div>
 
-  <div class="flow-card" style="height: auto; min-height: 0; align-self: start;">
+  <div class="flow-card">
     <div class="flow-card-header">
       <span class="flow-card-title">Swap Storage</span>
       <span class="tag <?= $barClass($swapPct) ?>" id="srv-swap-badge"><?= number_format($swapPct, 0) ?>%</span>
     </div>
     <div class="flow-card-value" id="srv-swap-val" style="font-size: 1.45rem;"><?= bytes_html($memory['swap_used']) ?> <small class="muted">/ <?= bytes_html($memory['swap_total']) ?></small></div>
-    <div style="background: rgba(255, 255, 255, 0.1); border-radius: 999px; height: 8px; overflow: hidden; margin-top: 0.75rem;">
-      <div id="srv-swap-bar" style="width: <?= min(100, $swapPct) ?>%; height: 100%; background: var(--accent-gradient); border-radius: 999px; transition: width 0.3s ease;"></div>
-    </div>
+    <div class="flow-card-foot"><div class="flow-progress">
+      <div id="srv-swap-bar" class="flow-progress-fill" style="width: <?= min(100, $swapPct) ?>%;"></div>
+    </div></div>
   </div>
 </div>
 
 <section style="margin-top: 2rem;">
-  <div style="display: flex; align-items: center; justify-content: flex-end; margin-bottom: 1rem;">
-    <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: var(--text);"><?= __('استهلاك كل كور') ?></h2>
-  </div>
-  <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap;">
+  <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; color: var(--text);"><?= __('استهلاك كل كور') ?></h2>
+  <div class="core-grid">
     <?php foreach ($cores as $i => $pct): ?>
-      <div class="flow-card" style="padding: 0.65rem 1rem; width: 160px; height: auto; min-height: 0;">
+      <div class="flow-card" style="padding: 0.65rem 1rem;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
           <span class="mono muted" style="font-size: 0.8rem;">Core #<?= (int)$i ?></span>
           <span class="mono ltr" id="srv-core-val-<?= (int)$i ?>" style="font-weight: 700; font-size: 0.88rem; color: var(--text);"><?= number_format((float)$pct, 0) ?>%</span>
         </div>
-        <div style="background: rgba(255, 255, 255, 0.1); border-radius: 999px; height: 6px; overflow: hidden;">
-          <div id="srv-core-bar-<?= (int)$i ?>" style="width: <?= min(100, (float)$pct) ?>%; height: 100%; background: var(--accent-gradient); border-radius: 999px; transition: width 0.3s ease;"></div>
+        <div class="flow-progress" style="height: 6px;">
+          <div id="srv-core-bar-<?= (int)$i ?>" class="flow-progress-fill" style="width: <?= min(100, (float)$pct) ?>%;"></div>
         </div>
       </div>
     <?php endforeach; ?>

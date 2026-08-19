@@ -13,8 +13,8 @@ layout_start();
 ?>
 
 <!-- 1. FlowBoard Top 4 Stat Cards with Glowing Sparklines -->
-<div class="flow-cards-grid" style="align-items: start; align-content: start;">
-  <div class="flow-card" style="height: auto; min-height: 0; align-self: start;">
+<div class="flow-cards-grid">
+  <div class="flow-card">
     <div class="flow-card-header">
       <span class="flow-card-title"><?= __('إجمالي اللوجات') ?></span>
       <div class="flow-card-icon-btn">
@@ -26,7 +26,7 @@ layout_start();
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="width: 14px; height: 14px; max-width: 14px; max-height: 14px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
       <span>↑ 12.5% <?= __('مقارنةً بالشهر الماضي') ?></span>
     </div>
-    <div style="height: 40px; max-height: 40px; overflow: hidden; width: 100%; margin-top: 0.85rem;">
+    <div class="flow-card-foot"><div class="flow-spark-wrap">
       <svg class="flow-sparkline" width="100%" height="40" style="width: 100%; height: 40px; max-height: 40px; display: block;" viewBox="0 0 100 30" preserveAspectRatio="none">
         <defs>
           <linearGradient id="grad-orange" x1="0" y1="0" x2="0" y2="1">
@@ -37,10 +37,10 @@ layout_start();
         <path d="M0,25 Q15,10 30,18 T60,8 T90,22 L100,12 L100,30 L0,30 Z" fill="url(#grad-orange)"/>
         <path d="M0,25 Q15,10 30,18 T60,8 T90,22 L100,12" fill="none" stroke="#ff6b00" stroke-width="2"/>
       </svg>
-    </div>
+    </div></div>
   </div>
 
-  <div class="flow-card" style="height: auto; min-height: 0; align-self: start;">
+  <div class="flow-card">
     <div class="flow-card-header">
       <span class="flow-card-title"><?= __('إجمالي الحجم') ?></span>
       <div class="flow-card-icon-btn" style="background: rgba(34, 197, 94, 0.15); color: #22c55e;">
@@ -52,7 +52,7 @@ layout_start();
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="width: 14px; height: 14px; max-width: 14px; max-height: 14px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
       <span>↑ 8.4% <?= __('مستقر بدون تضخم') ?></span>
     </div>
-    <div style="height: 40px; max-height: 40px; overflow: hidden; width: 100%; margin-top: 0.85rem;">
+    <div class="flow-card-foot"><div class="flow-spark-wrap">
       <svg class="flow-sparkline" width="100%" height="40" style="width: 100%; height: 40px; max-height: 40px; display: block;" viewBox="0 0 100 30" preserveAspectRatio="none">
         <defs>
           <linearGradient id="grad-green" x1="0" y1="0" x2="0" y2="1">
@@ -63,10 +63,10 @@ layout_start();
         <path d="M0,20 Q20,28 40,12 T80,18 L100,5 L100,30 L0,30 Z" fill="url(#grad-green)"/>
         <path d="M0,20 Q20,28 40,12 T80,18 L100,5" fill="none" stroke="#22c55e" stroke-width="2"/>
       </svg>
-    </div>
+    </div></div>
   </div>
 
-  <div class="flow-card" style="height: auto; min-height: 0; align-self: start;">
+  <div class="flow-card">
     <div class="flow-card-header">
       <span class="flow-card-title"><?= __('أحدث تعديل') ?></span>
       <div class="flow-card-icon-btn" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
@@ -77,7 +77,7 @@ layout_start();
     <div class="flow-card-trend" style="color: #38bdf8;">
       <span><?= $latestMtime ? e(date('Y-m-d', $latestMtime)) : '' ?></span>
     </div>
-    <div style="height: 40px; max-height: 40px; overflow: hidden; width: 100%; margin-top: 0.85rem;">
+    <div class="flow-card-foot"><div class="flow-spark-wrap">
       <svg class="flow-sparkline" width="100%" height="40" style="width: 100%; height: 40px; max-height: 40px; display: block;" viewBox="0 0 100 30" preserveAspectRatio="none">
         <defs>
           <linearGradient id="grad-blue" x1="0" y1="0" x2="0" y2="1">
@@ -88,10 +88,10 @@ layout_start();
         <path d="M0,15 Q25,5 50,22 T90,10 L100,18 L100,30 L0,30 Z" fill="url(#grad-blue)"/>
         <path d="M0,15 Q25,5 50,22 T90,10 L100,18" fill="none" stroke="#38bdf8" stroke-width="2"/>
       </svg>
-    </div>
+    </div></div>
   </div>
 
-  <div class="flow-card" style="height: auto; min-height: 0; align-self: start;">
+  <div class="flow-card">
     <div class="flow-card-header">
       <span class="flow-card-title"><?= __('أقدم ملف') ?></span>
       <div class="flow-card-icon-btn" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
@@ -102,7 +102,7 @@ layout_start();
     <div class="flow-card-trend" style="color: #f59e0b;">
       <span><?= $oldestMtime ? e(date('H:i', $oldestMtime)) : '' ?></span>
     </div>
-    <div style="height: 40px; max-height: 40px; overflow: hidden; width: 100%; margin-top: 0.85rem;">
+    <div class="flow-card-foot"><div class="flow-spark-wrap">
       <svg class="flow-sparkline" width="100%" height="40" style="width: 100%; height: 40px; max-height: 40px; display: block;" viewBox="0 0 100 30" preserveAspectRatio="none">
         <defs>
           <linearGradient id="grad-amber" x1="0" y1="0" x2="0" y2="1">
@@ -113,7 +113,7 @@ layout_start();
         <path d="M0,28 Q30,12 60,20 T90,8 L100,15 L100,30 L0,30 Z" fill="url(#grad-amber)"/>
         <path d="M0,28 Q30,12 60,20 T90,8 L100,15" fill="none" stroke="#f59e0b" stroke-width="2"/>
       </svg>
-    </div>
+    </div></div>
   </div>
 </div>
 
