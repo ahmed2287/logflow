@@ -545,4 +545,63 @@
       btn.textContent = wrapper.classList.contains('is-expanded') ? '▲' : '▼';
     }
   });
+
+  /* --- Log Level Filter & Quick Line Search --- */
+  var levelBtns = document.querySelectorAll('.btn-level-filter');
+  var quickSearch = document.getElementById('quick-line-search');
+  var logTableObj = document.querySelector('.logtable');
+
+  var activeLevel = 'all';
+
+  var applyLineFilters = function () {
+    if (!logTableObj) return;
+    var query = quickSearch ? quickSearch.value.trim().toLowerCase() : '';
+    var rows = logTableObj.querySelectorAll('tbody tr');
+
+    Array.prototype.forEach.call(rows, function (row) {
+      var rowLevel = row.getAttribute('data-level') || 'other';
+      var text = row.textContent.toLowerCase();
+
+      var matchLevel = (activeLevel === 'all') ||
+                       (activeLevel === 'error' && (rowLevel === 'error' || row.classList.contains('line-error'))) ||
+                       (activeLevel === 'warn' && (rowLevel === 'warn' || row.classList.contains('line-warn'))) ||
+                       (activeLevel === 'info' && (rowLevel === 'info' || row.classList.contains('line-info')));
+
+      var matchQuery = (query === '') || (text.indexOf(query) !== -1);
+
+      if (matchLevel && matchQuery) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  };
+
+  if (levelBtns.length > 0) {
+    Array.prototype.forEach.call(levelBtns, function (btn) {
+      btn.addEventListener('click', function () {
+        Array.prototype.forEach.call(levelBtns, function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        activeLevel = btn.getAttribute('data-level') || 'all';
+        applyLineFilters();
+      });
+    });
+  }
+
+  if (quickSearch) {
+    quickSearch.addEventListener('input', applyLineFilters);
+  }
+
+  /* --- Server Active Processes Search Filter --- */
+  var procSearch = document.getElementById('proc-search-input');
+  if (procSearch) {
+    procSearch.addEventListener('input', function () {
+      var q = procSearch.value.trim().toLowerCase();
+      var pRows = document.querySelectorAll('#srv-procs-tbody tr');
+      Array.prototype.forEach.call(pRows, function (row) {
+        var text = row.textContent.toLowerCase();
+        row.style.display = (q === '' || text.indexOf(q) !== -1) ? '' : 'none';
+      });
+    });
+  }
 })();

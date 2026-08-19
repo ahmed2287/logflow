@@ -74,7 +74,64 @@ if ($content === '') {
     $rawLines = explode("\n", $safe);
     $totalCount = count($rawLines);
     $reversedLines = array_reverse($rawLines, true);
+
+    $errCount  = 0;
+    $warnCount = 0;
+    $infoCount = 0;
+    $otherCount= 0;
+
+    $preparedLines = [];
+    foreach ($reversedLines as $origIdx => $line) {
+        $cls   = 'line-default';
+        $level = 'other';
+        $plain = strtolower(strip_tags($line));
+        if (str_contains($plain, 'error') || str_contains($plain, 'fatal') || str_contains($plain, 'exception') || str_contains($plain, 'critical') || str_contains($plain, 'fail')) {
+            $cls   = 'line-error';
+            $level = 'error';
+            $errCount++;
+        } elseif (str_contains($plain, 'warn')) {
+            $cls   = 'line-warn';
+            $level = 'warn';
+            $warnCount++;
+        } elseif (str_contains($plain, 'notice') || str_contains($plain, 'info') || str_contains($plain, 'debug')) {
+            $cls   = 'line-info';
+            $level = 'info';
+            $infoCount++;
+        } else {
+            $otherCount++;
+        }
+        $preparedLines[] = [
+            'idx'   => $origIdx + 1,
+            'line'  => $line === '' ? '&nbsp;' : $line,
+            'cls'   => $cls,
+            'level' => $level,
+        ];
+    }
     ?>
+
+    <!-- Log Level Filters Toolbar -->
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+      <div class="log-level-toolbar" style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
+        <span class="muted small" style="font-weight: 700; font-size: 0.85rem; color: var(--text);"><?= __('تصفية المستويات:') ?></span>
+        <button type="button" class="btn btn-sm btn-level-filter active" data-level="all" style="font-weight: 700;">
+          <?= __('الكل') ?> (<span id="cnt-all"><?= $totalCount ?></span>)
+        </button>
+        <button type="button" class="btn btn-sm btn-level-filter" data-level="error" style="border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; font-weight: 700;">
+          🔴 <?= __('الأخطاء') ?> (<span id="cnt-error"><?= $errCount ?></span>)
+        </button>
+        <button type="button" class="btn btn-sm btn-level-filter" data-level="warn" style="border: 1px solid rgba(245, 158, 11, 0.4); color: #f59e0b; font-weight: 700;">
+          🟡 <?= __('التحذيرات') ?> (<span id="cnt-warn"><?= $warnCount ?></span>)
+        </button>
+        <button type="button" class="btn btn-sm btn-level-filter" data-level="info" style="border: 1px solid rgba(59, 130, 246, 0.4); color: #3b82f6; font-weight: 700;">
+          🔵 <?= __('المعلومات') ?> (<span id="cnt-info"><?= $infoCount ?></span>)
+        </button>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <input type="text" id="quick-line-search" class="form-control form-control-sm mono ltr" placeholder="🔍 <?= __('تصفية حية داخل السطور...') ?>" style="width: 250px; font-size: 0.82rem;">
+      </div>
+    </div>
+
     <div class="terminal-window">
       <div class="terminal-header">
         <div class="terminal-dots">
@@ -88,20 +145,10 @@ if ($content === '') {
       <div class="logview">
         <table class="logtable">
           <tbody>
-            <?php foreach ($reversedLines as $origIdx => $line): 
-              $cls = '';
-              $plain = strtolower(strip_tags($line));
-              if (str_contains($plain, 'error') || str_contains($plain, 'fatal') || str_contains($plain, 'exception') || str_contains($plain, 'critical')) {
-                  $cls = 'line-error';
-              } elseif (str_contains($plain, 'warn')) {
-                  $cls = 'line-warn';
-              } elseif (str_contains($plain, 'notice') || str_contains($plain, 'info')) {
-                  $cls = 'line-info';
-              }
-            ?>
-              <tr class="<?= $cls ?>">
-                <td class="lineno"><?= $origIdx + 1 ?></td>
-                <td class="linetext"><?= $line === '' ? '&nbsp;' : $line ?></td>
+            <?php foreach ($preparedLines as $item): ?>
+              <tr class="<?= $item['cls'] ?>" data-level="<?= $item['level'] ?>">
+                <td class="lineno"><?= $item['idx'] ?></td>
+                <td class="linetext"><?= $item['line'] ?></td>
               </tr>
             <?php endforeach; ?>
           </tbody>

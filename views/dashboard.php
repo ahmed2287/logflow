@@ -227,22 +227,34 @@ layout_start();
   </nav>
 <?php endif; ?>
 
-<form class="saas-toolbar" method="get" action="">
+<form class="saas-toolbar" method="get" action="" style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.25rem;">
   <input type="hidden" name="page" value="dashboard">
   <?php if ($activeSrc): ?><input type="hidden" name="src" value="<?= e($activeSrc['name']) ?>"><?php endif; ?>
   
-  <div class="search-field">
+  <div class="search-field" style="flex: 1; min-width: 220px;">
     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="width: 18px; height: 18px; max-width: 18px; max-height: 18px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
     <input type="search" name="q" value="<?= e($_GET['q'] ?? '') ?>" placeholder="<?= e(__('ابحث في أسماء الملفات…')) ?>">
   </div>
 
-  <select name="sort">
-    <option value="name" <?= ($_GET['sort'] ?? '') === 'name' ? 'selected' : '' ?>><?= __('الاسم') ?></option>
-    <option value="size" <?= ($_GET['sort'] ?? '') === 'size' ? 'selected' : '' ?>><?= __('الحجم') ?></option>
-    <option value="mtime" <?= ($_GET['sort'] ?? '') === 'mtime' ? 'selected' : '' ?>><?= __('التاريخ') ?></option>
+  <select name="min_age" style="height: 40px; border-radius: var(--radius); font-size: 0.84rem;">
+    <option value=""><?= __('كل الأعمار (الأيام)') ?></option>
+    <option value="1" <?= ($_GET['min_age'] ?? '') === '1' ? 'selected' : '' ?>><?= __('أقدم من 1 يوم') ?></option>
+    <option value="7" <?= ($_GET['min_age'] ?? '') === '7' ? 'selected' : '' ?>><?= __('أقدم من 7 أيام') ?></option>
+    <option value="30" <?= ($_GET['min_age'] ?? '') === '30' ? 'selected' : '' ?>><?= __('أقدم من 30 يوم') ?></option>
   </select>
 
-  <button class="btn btn-ghost btn-sm" type="submit"><?= __('تصفية') ?></button>
+  <select name="sort" style="height: 40px; border-radius: var(--radius); font-size: 0.84rem;">
+    <option value="mtime" <?= ($_GET['sort'] ?? 'mtime') === 'mtime' ? 'selected' : '' ?>><?= __('الترتيب حسب: التاريخ') ?></option>
+    <option value="size" <?= ($_GET['sort'] ?? '') === 'size' ? 'selected' : '' ?>><?= __('الترتيب حسب: الحجم') ?></option>
+    <option value="name" <?= ($_GET['sort'] ?? '') === 'name' ? 'selected' : '' ?>><?= __('الترتيب حسب: الاسم') ?></option>
+  </select>
+
+  <select name="dir" style="height: 40px; border-radius: var(--radius); font-size: 0.84rem;">
+    <option value="desc" <?= ($_GET['dir'] ?? 'desc') === 'desc' ? 'selected' : '' ?>><?= __('تنازلي ⬇') ?></option>
+    <option value="asc" <?= ($_GET['dir'] ?? '') === 'asc' ? 'selected' : '' ?>><?= __('تصاعدي ⬆') ?></option>
+  </select>
+
+  <button class="btn btn-primary btn-sm" type="submit" style="height: 40px; font-weight: 700; padding: 0 1.2rem;"><?= __('تطبيق الفلتر') ?></button>
 </form>
 
 <!-- 4. Log Files Data Table -->

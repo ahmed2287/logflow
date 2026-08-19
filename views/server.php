@@ -129,11 +129,14 @@ layout_start();
 </section>
 
 <section style="margin-top: 2.5rem;">
-  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
     <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: var(--text);">⚙️ <?= __('أعلى العمليات النشطة') ?></h2>
-    <div style="display: flex; gap: 0.35rem;">
-      <a class="btn btn-sm <?= $psort === 'cpu' ? 'btn-primary' : 'btn-ghost' ?>" href="?page=server&amp;psort=cpu<?= $auto ? '&amp;auto=1' : '' ?>">CPU</a>
-      <a class="btn btn-sm <?= $psort === 'mem' ? 'btn-primary' : 'btn-ghost' ?>" href="?page=server&amp;psort=mem<?= $auto ? '&amp;auto=1' : '' ?>"><?= __('الذاكرة') ?></a>
+    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+      <input type="text" id="proc-search-input" class="form-control form-control-sm mono ltr" placeholder="🔍 <?= __('فلترة العمليات (اسم، PID، مستخدم)...') ?>" style="width: 250px; font-size: 0.82rem;">
+      <div style="display: flex; gap: 0.35rem;">
+        <a class="btn btn-sm <?= $psort === 'cpu' ? 'btn-primary' : 'btn-ghost' ?>" href="?page=server&amp;psort=cpu<?= $auto ? '&amp;auto=1' : '' ?>">CPU</a>
+        <a class="btn btn-sm <?= $psort === 'mem' ? 'btn-primary' : 'btn-ghost' ?>" href="?page=server&amp;psort=mem<?= $auto ? '&amp;auto=1' : '' ?>"><?= __('الذاكرة') ?></a>
+      </div>
     </div>
   </div>
   <div class="table-wrap">
