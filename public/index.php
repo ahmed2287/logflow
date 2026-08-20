@@ -792,6 +792,38 @@ switch ($page) {
         ]);
         break;
 
+    /* ---------------------------------------------------- notifications */
+    case 'notifications':
+        require_login();
+        if ($method === 'POST') {
+            csrf_check();
+            $before = config_load();
+            $new    = array_merge($before, [
+                'email_enabled'    => !empty($_POST['email_enabled']),
+                'smtp_host'        => trim((string)($_POST['smtp_host'] ?? 'smtp.gmail.com')),
+                'smtp_port'        => max(1, min(65535, (int)($_POST['smtp_port'] ?? 587))),
+                'smtp_crypto'      => in_array((string)($_POST['smtp_crypto'] ?? ''), ['tls', 'ssl', 'none'], true) ? (string)$_POST['smtp_crypto'] : 'tls',
+                'smtp_user'        => trim((string)($_POST['smtp_user'] ?? '')),
+                'smtp_pass'        => (string)($_POST['smtp_pass'] ?? ''),
+                'alert_recipient'  => trim((string)($_POST['alert_recipient'] ?? '')),
+                'cooldown_minutes' => max(1, min(1440, (int)($_POST['cooldown_minutes'] ?? 5))),
+            ]);
+
+            if (config_save($new)) {
+                audit_log('notifications', ['before' => $before, 'after' => $new]);
+                flash('success', __('تم حفظ إعدادات التنبيهات والبريد الإلكتروني بنجاح.'));
+            } else {
+                flash('error', __('تعذّر كتابة ملف الإعدادات.'));
+            }
+            redirect('?page=notifications');
+        }
+
+        view('notifications', [
+            'flashes' => flash_take(),
+            'config'  => config_load(),
+        ]);
+        break;
+
     /* ------------------------------------------------------------ users */
     case 'users':
         require_admin();

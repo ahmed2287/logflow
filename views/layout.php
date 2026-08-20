@@ -107,6 +107,11 @@ summary { list-style: none; cursor: pointer; }
       <span><?= __('سجل النشاط') ?></span>
     </a>
 
+    <a class="nav-link <?= $page === 'notifications' ? 'is-active' : '' ?>" href="?page=notifications<?= e(src_qs()) ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="width: 20px; height: 20px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+      <span><?= __('التنبيهات والإشعارات') ?></span>
+    </a>
+
     <?php if (is_admin()): ?>
       <a class="nav-link <?= $page === 'users' ? 'is-active' : '' ?>" href="?page=users<?= e(src_qs()) ?>">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="width: 20px; height: 20px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>

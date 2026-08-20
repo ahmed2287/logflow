@@ -80,69 +80,9 @@ layout_start();
       <input type="number" name="max_view_mb" min="1" max="500" value="<?= (int)$config['max_view_mb'] ?>" dir="ltr" style="width: 100%;">
       <p class="muted small" style="margin-top: 0.3rem;"><?= __('الملفات الأكبر تُعرض جزئيًا فقط.') ?></p>
     </div>
-  <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
-    <h3 style="margin-top: 0; font-size: 1.05rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.5rem;">
-      <span>📧</span> <?= __('إعدادات تنبيهات البريد الإلكتروني (Email & SMTP)') ?>
-    </h3>
-    <p class="muted small" style="margin-bottom: 1.25rem;">
-      <?= __('قم بإدخال بيانات خادم الـ SMTP لإرسال إشعارات فورية إلى إيميلك عند اكتشاف أخطاء جديدة في اللوجات.') ?>
-    </p>
-
-    <div style="margin-bottom: 1.25rem;">
-      <label style="display: flex; align-items: center; gap: 0.55rem; font-weight: 700; cursor: pointer; color: var(--text);">
-        <input type="checkbox" name="email_enabled" value="1" <?= !empty($config['email_enabled']) ? 'checked' : '' ?> style="width: 18px; height: 18px;">
-        <span><?= __('تفعيل التنبيهات البريدية التلقائية عند حدوث أخطاء (Enable Email Notifications)') ?></span>
-      </label>
-    </div>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
-      <div>
-        <label style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; color: var(--text);"><?= __('خادم الـ SMTP (Host)') ?></label>
-        <input type="text" name="smtp_host" value="<?= e($config['smtp_host'] ?? 'smtp.gmail.com') ?>" class="mono ltr" placeholder="smtp.gmail.com" dir="ltr" style="width: 100%;">
-      </div>
-      <div>
-        <label style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; color: var(--text);"><?= __('المنفذ (Port)') ?></label>
-        <input type="number" name="smtp_port" value="<?= (int)($config['smtp_port'] ?? 587) ?>" dir="ltr" style="width: 100%;">
-      </div>
-      <div>
-        <label style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; color: var(--text);"><?= __('التشفير (Crypto)') ?></label>
-        <select name="smtp_crypto" style="width: 100%; height: 40px; border-radius: var(--radius); font-size: 0.88rem;">
-          <option value="tls" <?= ($config['smtp_crypto'] ?? 'tls') === 'tls' ? 'selected' : '' ?>>TLS (Recommended 587)</option>
-          <option value="ssl" <?= ($config['smtp_crypto'] ?? '') === 'ssl' ? 'selected' : '' ?>>SSL (Port 465)</option>
-          <option value="none" <?= ($config['smtp_crypto'] ?? '') === 'none' ? 'selected' : '' ?>>None (Port 25)</option>
-        </select>
-      </div>
-    </div>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
-      <div>
-        <label style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; color: var(--text);"><?= __('إيميل المرسل (SMTP User)') ?></label>
-        <input type="email" name="smtp_user" value="<?= e($config['smtp_user'] ?? '') ?>" class="mono ltr" placeholder="alerts@viber-solutions.com" dir="ltr" style="width: 100%;">
-      </div>
-      <div>
-        <label style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; color: var(--text);"><?= __('كلمة المرور / App Password') ?></label>
-        <input type="password" name="smtp_pass" value="<?= e($config['smtp_pass'] ?? '') ?>" class="mono ltr" placeholder="••••••••••••" dir="ltr" style="width: 100%;">
-      </div>
-    </div>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-      <div>
-        <label style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; color: var(--text);"><?= __('إيميل المستلم للتنبيهات (Recipient Email)') ?></label>
-        <input type="email" name="alert_recipient" value="<?= e($config['alert_recipient'] ?? '') ?>" class="mono ltr" placeholder="admin@viber-solutions.com" dir="ltr" style="width: 100%;">
-      </div>
-      <div>
-        <label style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; color: var(--text);"><?= __('مهلة منع التكرار (دقائق)') ?></label>
-        <input type="number" name="cooldown_minutes" min="1" max="1440" value="<?= (int)($config['cooldown_minutes'] ?? 5) ?>" dir="ltr" style="width: 100%;">
-        <p class="muted small" style="margin-top: 0.3rem;"><?= __('لمنع إغراق البريد في حال حدوث تكرار أخطاء.') ?></p>
-      </div>
-    </div>
-
-    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-      <button class="btn btn-primary" type="submit">💾 <?= __('حفظ الإعدادات') ?></button>
-      <button class="btn btn-ghost" type="button" id="btn-test-email" style="border: 1px solid var(--accent); color: var(--accent); font-weight: 700;">🧪 <?= __('إرسال إيميل تجريبي') ?></button>
-      <div id="test-email-status" style="font-size: 0.88rem; font-weight: 700;"></div>
-    </div>
   </div>
+
+  <button class="btn btn-primary" type="submit">💾 <?= __('حفظ الإعدادات') ?></button>
 </form>
 
 <section style="margin-top: 2rem;">
