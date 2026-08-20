@@ -33,8 +33,8 @@ $renderRows = function (array $groups) use ($rel, $mb, $full): void {
     <?php if (empty($full) && $report['partial']): ?>
       <a class="btn btn-primary" href="?page=analyze&amp;file=<?= urlencode($rel) ?>&amp;full=1<?= e(src_qs()) ?>">🔬 <?= __('تحليل الملف بالكامل') ?></a>
     <?php endif; ?>
-    <a class="btn btn-ghost" href="?page=view&amp;file=<?= urlencode($rel) ?><?= e(src_qs()) ?>">📄 <?= __('عرض اللوج') ?></a>
-    <a class="btn btn-ghost" href="?page=dashboard<?= e(src_qs()) ?>">← <?= __('رجوع') ?></a>
+    <a class="btn btn-primary" href="?page=view&amp;file=<?= urlencode($rel) ?><?= e(src_qs()) ?>">📄 <?= __('عرض اللوج') ?></a>
+    <a class="btn btn-primary" href="?page=dashboard<?= e(src_qs()) ?>">← <?= __('رجوع') ?></a>
   </div>
 </div>
 

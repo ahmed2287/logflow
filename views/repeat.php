@@ -14,8 +14,8 @@ layout_start();
     <?php if (empty($full) && !empty($detail['partial'])): ?>
       <a class="btn btn-primary" href="?page=repeat&amp;file=<?= urlencode($rel) ?>&amp;k=<?= e($key) ?>&amp;full=1<?= e(src_qs()) ?>">🔬 <?= __('تحليل الملف بالكامل') ?></a>
     <?php endif; ?>
-    <a class="btn btn-ghost" href="?page=analyze&amp;file=<?= urlencode($rel) ?><?= !empty($full) ? '&amp;full=1' : '&amp;mb=' . (int)$mb ?><?= e(src_qs()) ?>">📊 <?= __('رجوع للتحليل') ?></a>
-    <a class="btn btn-ghost" href="?page=view&amp;file=<?= urlencode($rel) ?>&amp;find=<?= urlencode(mb_strcut($detail['first_line'], 0, 80)) ?><?= e(src_qs()) ?>">📄 <?= __('عرض اللوج') ?></a>
+    <a class="btn btn-primary" href="?page=analyze&amp;file=<?= urlencode($rel) ?><?= !empty($full) ? '&amp;full=1' : '&amp;mb=' . (int)$mb ?><?= e(src_qs()) ?>">📊 <?= __('رجوع للتحليل') ?></a>
+    <a class="btn btn-primary" href="?page=view&amp;file=<?= urlencode($rel) ?>&amp;find=<?= urlencode(mb_strcut($detail['first_line'], 0, 80)) ?><?= e(src_qs()) ?>">📄 <?= __('عرض اللوج') ?></a>
   </div>
 </div>
 
