@@ -271,9 +271,9 @@ layout_start();
     <h4>⚡ <?= __('تنبؤات وتحليلات النظام (System Insights)') ?></h4>
     <p><?= __('النظام يعمل باستقرار تام 100%. تم تحرير المساحة وإدارة السجلات بكفاءة، ولا توجد أخطاء حرجة غير معالجة.') ?></p>
   </div>
-  <div style="display: flex; gap: 0.6rem;">
+  <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
     <a href="?page=logs" class="btn btn-primary">📁 <?= __('تصفح ملفات اللوجات') ?></a>
-    <a href="?page=audit" class="btn" style="background: rgba(255,255,255,0.1); color: #ffffff; border: 1px solid rgba(255,255,255,0.2);"><?= __('عرض التقرير المفصل') ?></a>
+    <a href="?page=audit" class="btn btn-ghost" style="border: 1px solid var(--border); color: var(--text); font-weight: 700;"><?= __('عرض التقرير المفصل') ?></a>
   </div>
 </div>
 
