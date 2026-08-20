@@ -235,7 +235,9 @@ summary { list-style: none; cursor: pointer; }
 <?php if (!$isAuthPage): ?><main class="app-main"><?php endif; ?>
 
   <?php foreach ($flashes as $flash): ?>
-    <div class="alert alert-<?= e($flash['type']) ?>"><?= e($flash['msg']) ?></div>
+    <div class="alert alert-<?= e($flash['type']) ?>">
+      <span><?= e($flash['message'] ?? $flash['msg'] ?? '') ?></span>
+    </div>
   <?php endforeach; ?>
 
   <?= $content ?>
