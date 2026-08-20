@@ -85,15 +85,24 @@ if ($content === '') {
         $cls   = 'line-default';
         $level = 'other';
         $plain = strtolower(strip_tags($line));
-        if (str_contains($plain, 'error') || str_contains($plain, 'fatal') || str_contains($plain, 'exception') || str_contains($plain, 'critical') || str_contains($plain, 'fail')) {
+        if (
+            str_contains($plain, 'error') || str_contains($plain, 'err') ||
+            str_contains($plain, 'fatal') || str_contains($plain, 'exception') ||
+            str_contains($plain, 'critical') || str_contains($plain, 'fail') ||
+            str_contains($plain, 'denied') || str_contains($plain, 'panic') ||
+            str_contains($plain, 'uncaught') || str_contains($plain, 'unhandled') ||
+            str_contains($plain, 'crash') || str_contains($plain, 'killed') ||
+            str_contains($plain, 'segfault') || str_contains($plain, 'timeout') ||
+            preg_match('/\b(500|502|503|504|400|401|403|404)\b/', $plain)
+        ) {
             $cls   = 'line-error';
             $level = 'error';
             $errCount++;
-        } elseif (str_contains($plain, 'warn')) {
+        } elseif (str_contains($plain, 'warn') || str_contains($plain, 'warning')) {
             $cls   = 'line-warn';
             $level = 'warn';
             $warnCount++;
-        } elseif (str_contains($plain, 'notice') || str_contains($plain, 'info') || str_contains($plain, 'debug')) {
+        } elseif (str_contains($plain, 'notice') || str_contains($plain, 'info') || str_contains($plain, 'debug') || str_contains($plain, 'success') || str_contains($plain, '200 ok')) {
             $cls   = 'line-info';
             $level = 'info';
             $infoCount++;

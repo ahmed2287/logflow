@@ -320,11 +320,18 @@
         
         var classes = ['line-live-new'];
         var plain = rawLine.toLowerCase();
-        if (plain.indexOf('error') !== -1 || plain.indexOf('fatal') !== -1 || plain.indexOf('exception') !== -1 || plain.indexOf('critical') !== -1) {
+        if (
+          plain.indexOf('error') !== -1 || plain.indexOf('err') !== -1 ||
+          plain.indexOf('fatal') !== -1 || plain.indexOf('exception') !== -1 ||
+          plain.indexOf('critical') !== -1 || plain.indexOf('fail') !== -1 ||
+          plain.indexOf('denied') !== -1 || plain.indexOf('panic') !== -1 ||
+          plain.indexOf('uncaught') !== -1 || plain.indexOf('crash') !== -1 ||
+          /\b(500|502|503|504|400|401|403|404)\b/.test(plain)
+        ) {
           classes.push('line-error');
         } else if (plain.indexOf('warn') !== -1) {
           classes.push('line-warn');
-        } else if (plain.indexOf('notice') !== -1 || plain.indexOf('info') !== -1) {
+        } else if (plain.indexOf('notice') !== -1 || plain.indexOf('info') !== -1 || plain.indexOf('debug') !== -1) {
           classes.push('line-info');
         }
         tr.className = classes.join(' ');
