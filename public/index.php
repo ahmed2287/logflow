@@ -907,6 +907,11 @@ switch ($page) {
         echo json_encode(notify_send_test_webhook());
         exit;
 
+    /* ------------------------------------------------------------ Inbound REST API */
+    case 'api':
+        handle_api_request();
+        exit;
+
     /* ------------------------------------------------------------ users */
     case 'users':
         require_admin();

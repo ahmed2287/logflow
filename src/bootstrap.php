@@ -195,3 +195,4 @@ require_once __DIR__ . '/audit.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/logs.php';
 require_once __DIR__ . '/notifier.php';
+require_once __DIR__ . '/api.php';
