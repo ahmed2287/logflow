@@ -230,6 +230,124 @@ function notify_send_test_email(): array
 }
 
 /**
+ * Helper to send HTTP JSON POST payload via curl or stream_socket
+ */
+function send_http_json_post(string $url, array $payload, array $headers = ['Content-Type: application/json']): array
+{
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return ['ok' => true, 'message' => __('تم إرسال التنبيه التجريبي بنجاح!')];
+        }
+        return ['ok' => false, 'message' => sprintf(__('فشل الإرسال (كود HTTP %d): %s'), $httpCode, $curlError ?: substr((string)$response, 0, 150))];
+    }
+
+    $opts = [
+        'http' => [
+            'method'  => 'POST',
+            'header'  => implode("\r\n", $headers),
+            'content' => json_encode($payload),
+            'timeout' => 10,
+        ],
+        'ssl' => [
+            'verify_peer'      => false,
+            'verify_peer_name' => false,
+        ]
+    ];
+    $context = stream_context_create($opts);
+    $res     = @file_get_contents($url, false, $context);
+    if ($res !== false) {
+        return ['ok' => true, 'message' => __('تم إرسال التنبيه التجريبي بنجاح!')];
+    }
+
+    return ['ok' => false, 'message' => __('فشل الاتصال برابط الـ Webhook. تأكد من صحة الرابط وعمل الخادم.')];
+}
+
+/**
+ * Send Test Mattermost Alert Handler
+ */
+function notify_send_test_mattermost(): array
+{
+    $url = (string)config('mattermost_webhook_url', '');
+    if (empty($url)) {
+        return ['ok' => false, 'message' => __('يرجى تزويد رابط الـ Webhook الخاص بـ Mattermost أولاً.')];
+    }
+    $username = (string)config('mattermost_username', 'LogFlow Alert');
+    $channel  = (string)config('mattermost_channel', '');
+
+    $payload = [
+        'text'     => "🧪 **[LogFlow Test Alert]** \n\nتهانينا! تم اختبار وتفعيل ربط إشعارات **Mattermost** بنجاح 🚀\n\n- **التاريخ:** " . date('Y-m-d H:i:s') . "\n- **المستخدم:** " . (current_user()['username'] ?? 'admin'),
+        'username' => $username,
+    ];
+    if (!empty($channel)) {
+        $payload['channel'] = $channel;
+    }
+
+    return send_http_json_post($url, $payload);
+}
+
+/**
+ * Send Test Telegram Alert Handler
+ */
+function notify_send_test_telegram(): array
+{
+    $token  = (string)config('telegram_bot_token', '');
+    $chatId = (string)config('telegram_chat_id', '');
+    if (empty($token) || empty($chatId)) {
+        return ['ok' => false, 'message' => __('يرجى تزويد توكن البوت ومعرف المحادثة (Chat ID) لـ Telegram أولاً.')];
+    }
+
+    $url     = 'https://api.telegram.org/bot' . urlencode($token) . '/sendMessage';
+    $text    = "🧪 <b>[LogFlow Test Alert]</b>\n\nتهانينا! تم اختبار وتفعيل إشعارات <b>Telegram</b> بنجاح 🚀\n\n📅 <b>التوقيت:</b> " . date('Y-m-d H:i:s');
+    $payload = [
+        'chat_id'    => $chatId,
+        'text'       => $text,
+        'parse_mode' => 'HTML',
+    ];
+
+    return send_http_json_post($url, $payload);
+}
+
+/**
+ * Send Test Generic Webhook Alert Handler
+ */
+function notify_send_test_webhook(): array
+{
+    $url = (string)config('webhook_url', '');
+    if (empty($url)) {
+        return ['ok' => false, 'message' => __('يرجى تزويد رابط الـ Webhook Endpoint أولاً.')];
+    }
+    $secret = (string)config('webhook_secret', '');
+
+    $payload = [
+        'event'     => 'test_ping',
+        'message'   => 'LogFlow Generic Webhook Connection Test Successful',
+        'timestamp' => date('Y-m-d H:i:s'),
+        'user'      => current_user()['username'] ?? 'admin',
+    ];
+
+    $headers = ['Content-Type: application/json'];
+    if (!empty($secret)) {
+        $headers[] = 'X-LogFlow-Secret: ' . $secret;
+    }
+
+    return send_http_json_post($url, $payload, $headers);
+}
+
+/**
  * Rate-limited Alert Trigger on New Error Detection
  */
 function notify_on_log_error(string $errorSnippet, string $filename): void

@@ -882,6 +882,31 @@ switch ($page) {
         ]);
         break;
 
+    /* ------------------------------------------- AJAX Test Notification Routes */
+    case 'test_email':
+        require_login();
+        header('Content-Type: application/json; charset=UTF-8');
+        echo json_encode(notify_send_test_email());
+        exit;
+
+    case 'test_mattermost':
+        require_login();
+        header('Content-Type: application/json; charset=UTF-8');
+        echo json_encode(notify_send_test_mattermost());
+        exit;
+
+    case 'test_telegram':
+        require_login();
+        header('Content-Type: application/json; charset=UTF-8');
+        echo json_encode(notify_send_test_telegram());
+        exit;
+
+    case 'test_webhook':
+        require_login();
+        header('Content-Type: application/json; charset=UTF-8');
+        echo json_encode(notify_send_test_webhook());
+        exit;
+
     /* ------------------------------------------------------------ users */
     case 'users':
         require_admin();

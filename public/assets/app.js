@@ -578,6 +578,9 @@
   /* --- Log Level Filter & Quick Line Search --- */
   var levelBtns = document.querySelectorAll('.btn-level-filter');
   var quickSearch = document.getElementById('quick-line-search');
+  /* --- Log Level Filter & Quick Line Search --- */
+  var levelBtns = document.querySelectorAll('.btn-level-filter');
+  var quickSearch = document.getElementById('quick-line-search');
   var logTableObj = document.querySelector('.logtable');
 
   var activeLevel = 'all';
@@ -634,38 +637,45 @@
     });
   }
 
-  /* --- Test Email AJAX Button --- */
-  var testEmailBtn = document.getElementById('btn-test-email');
-  var testEmailStatus = document.getElementById('test-email-status');
-  if (testEmailBtn) {
-    testEmailBtn.addEventListener('click', function () {
-      testEmailBtn.disabled = true;
-      if (testEmailStatus) {
-        testEmailStatus.style.color = 'var(--text)';
-        testEmailStatus.textContent = '⏳ جاري الاتصال بالـ SMTP وإرسال الإيميل التجريبي...';
+  /* --- Generic Test Alert AJAX Buttons (Email, Mattermost, Telegram, Webhook) --- */
+  var bindTestBtn = function (btnId, statusId, endpoint, loadingMsg) {
+    var btn = document.getElementById(btnId);
+    var status = document.getElementById(statusId);
+    if (!btn) return;
+
+    btn.addEventListener('click', function () {
+      btn.disabled = true;
+      if (status) {
+        status.style.color = 'var(--text)';
+        status.textContent = loadingMsg || '⏳ جاري إرسال التنبيه التجريبي...';
       }
 
-      fetch('?page=test_email')
+      fetch(endpoint)
         .then(function (res) { return res.json(); })
         .then(function (data) {
-          testEmailBtn.disabled = false;
-          if (testEmailStatus) {
+          btn.disabled = false;
+          if (status) {
             if (data && data.ok) {
-              testEmailStatus.style.color = '#22c55e';
-              testEmailStatus.textContent = '✅ ' + (data.message || 'تم إرسال الإيميل التجريبي بنجاح!');
+              status.style.color = '#22c55e';
+              status.textContent = '✅ ' + (data.message || 'تم إرسال التنبيه التجريبي بنجاح!');
             } else {
-              testEmailStatus.style.color = '#ef4444';
-              testEmailStatus.textContent = '❌ ' + (data.message || 'فشل إرسال الإيميل. راجع بيانات الـ SMTP.');
+              status.style.color = '#ef4444';
+              status.textContent = '❌ ' + (data.message || 'فشل إرسال التنبيه. تحقق من البيانات الحالية.');
             }
           }
         })
-        .catch(function (err) {
-          testEmailBtn.disabled = false;
-          if (testEmailStatus) {
-            testEmailStatus.style.color = '#ef4444';
-            testEmailStatus.textContent = '❌ خطأ في الاتصال بالسيرفر.';
+        .catch(function () {
+          btn.disabled = false;
+          if (status) {
+            status.style.color = '#ef4444';
+            status.textContent = '❌ خطأ في الاتصال بالسيرفر.';
           }
         });
     });
-  }
+  };
+
+  bindTestBtn('btn-test-email', 'test-email-status', '?page=test_email', '⏳ جاري الاتصال بالـ SMTP وإرسال الإيميل التجريبي...');
+  bindTestBtn('btn-test-mattermost', 'test-mattermost-status', '?page=test_mattermost', '⏳ جاري إرسال تنبيه تجريبي إلى Mattermost...');
+  bindTestBtn('btn-test-telegram', 'test-telegram-status', '?page=test_telegram', '⏳ جاري إرسال تنبيه تجريبي إلى Telegram Bot...');
+  bindTestBtn('btn-test-webhook', 'test-webhook-status', '?page=test_webhook', '⏳ جاري إرسال حمولة Webhook تجريبية...');
 })();
