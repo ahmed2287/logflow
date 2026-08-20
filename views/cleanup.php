@@ -108,7 +108,7 @@ layout_start();
     <span class="muted small"><?= __('اختصارات — أقدم من:') ?></span>
     <?php foreach (['أسبوع' => 7, 'شهر واحد' => 30, '3 شهور' => 90, '6 شهور' => 180, 'سنة واحدة' => 365] as $label => $daysAgo): ?>
       <?php $quick = date('Y-m-d', time() - $daysAgo * 86400); ?>
-      <button type="button" class="btn btn-ghost btn-sm <?= $before === $quick ? 'btn-primary' : '' ?>"
+      <button type="button" class="btn <?= $before === $quick ? 'btn-primary' : 'btn-ghost' ?> btn-sm"
               data-date="<?= $quick ?>"><?= __($label) ?></button>
     <?php endforeach; ?>
   </div>

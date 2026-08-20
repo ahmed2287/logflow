@@ -55,7 +55,7 @@
 
   <div style="display: flex; align-items: center; gap: 0.35rem; margin-inline-start: auto;">
     <?php foreach ([200, 500, 2000, 5000] as $preset): ?>
-      <a class="btn btn-ghost btn-sm <?= $lines === $preset ? 'btn-primary' : '' ?>"
+      <a class="btn <?= $lines === $preset ? 'btn-primary' : 'btn-ghost' ?> btn-sm"
          href="?page=view&amp;file=<?= urlencode($rel) ?>&amp;lines=<?= $preset ?>&amp;find=<?= urlencode($needle) ?><?= e(src_qs()) ?>"><?= $preset ?></a>
     <?php endforeach; ?>
   </div>
