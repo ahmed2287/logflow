@@ -795,27 +795,57 @@ switch ($page) {
     /* ---------------------------------------------------- notifications */
     case 'notifications':
         require_login();
+        $tab = (string)($_GET['tab'] ?? 'email');
+        if (!in_array($tab, ['email', 'mattermost', 'telegram', 'webhook'], true)) {
+            $tab = 'email';
+        }
+
         if ($method === 'POST') {
             csrf_check();
-            $before = config_load();
-            $new    = array_merge($before, [
-                'email_enabled'    => !empty($_POST['email_enabled']),
-                'smtp_host'        => trim((string)($_POST['smtp_host'] ?? 'smtp.gmail.com')),
-                'smtp_port'        => max(1, min(65535, (int)($_POST['smtp_port'] ?? 587))),
-                'smtp_crypto'      => in_array((string)($_POST['smtp_crypto'] ?? ''), ['tls', 'ssl', 'none'], true) ? (string)$_POST['smtp_crypto'] : 'tls',
-                'smtp_user'        => trim((string)($_POST['smtp_user'] ?? '')),
-                'smtp_pass'        => (string)($_POST['smtp_pass'] ?? ''),
-                'alert_recipient'  => trim((string)($_POST['alert_recipient'] ?? '')),
-                'cooldown_minutes' => max(1, min(1440, (int)($_POST['cooldown_minutes'] ?? 5))),
-            ]);
+            $before     = config_load();
+            $channelTab = (string)($_POST['channel_tab'] ?? $tab);
+
+            $updates = [];
+            if ($channelTab === 'email') {
+                $updates = [
+                    'email_enabled'    => !empty($_POST['email_enabled']),
+                    'smtp_host'        => trim((string)($_POST['smtp_host'] ?? 'smtp.gmail.com')),
+                    'smtp_port'        => max(1, min(65535, (int)($_POST['smtp_port'] ?? 587))),
+                    'smtp_crypto'      => in_array((string)($_POST['smtp_crypto'] ?? ''), ['tls', 'ssl', 'none'], true) ? (string)$_POST['smtp_crypto'] : 'tls',
+                    'smtp_user'        => trim((string)($_POST['smtp_user'] ?? '')),
+                    'smtp_pass'        => (string)($_POST['smtp_pass'] ?? ''),
+                    'alert_recipient'  => trim((string)($_POST['alert_recipient'] ?? '')),
+                    'cooldown_minutes' => max(1, min(1440, (int)($_POST['cooldown_minutes'] ?? 5))),
+                ];
+            } elseif ($channelTab === 'mattermost') {
+                $updates = [
+                    'mattermost_enabled'     => !empty($_POST['mattermost_enabled']),
+                    'mattermost_webhook_url' => trim((string)($_POST['mattermost_webhook_url'] ?? '')),
+                    'mattermost_channel'     => trim((string)($_POST['mattermost_channel'] ?? '')),
+                    'mattermost_username'    => trim((string)($_POST['mattermost_username'] ?? 'LogFlow Alert')),
+                ];
+            } elseif ($channelTab === 'telegram') {
+                $updates = [
+                    'telegram_enabled'   => !empty($_POST['telegram_enabled']),
+                    'telegram_bot_token' => trim((string)($_POST['telegram_bot_token'] ?? '')),
+                    'telegram_chat_id'   => trim((string)($_POST['telegram_chat_id'] ?? '')),
+                ];
+            } elseif ($channelTab === 'webhook') {
+                $updates = [
+                    'webhook_enabled' => !empty($_POST['webhook_enabled']),
+                    'webhook_url'     => trim((string)($_POST['webhook_url'] ?? '')),
+                ];
+            }
+
+            $new = array_merge($before, $updates);
 
             if (config_save($new)) {
-                audit_log('notifications', ['before' => $before, 'after' => $new]);
-                flash('success', __('تم حفظ إعدادات التنبيهات والبريد الإلكتروني بنجاح.'));
+                audit_log('notifications', ['tab' => $channelTab, 'before' => $before, 'after' => $new]);
+                flash('success', __('تم حفظ إعدادات القناة بنجاح.'));
             } else {
                 flash('error', __('تعذّر كتابة ملف الإعدادات.'));
             }
-            redirect('?page=notifications');
+            redirect('?page=notifications&tab=' . urlencode($channelTab));
         }
 
         view('notifications', [
