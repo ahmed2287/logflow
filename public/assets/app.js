@@ -633,4 +633,39 @@
       });
     });
   }
+
+  /* --- Test Email AJAX Button --- */
+  var testEmailBtn = document.getElementById('btn-test-email');
+  var testEmailStatus = document.getElementById('test-email-status');
+  if (testEmailBtn) {
+    testEmailBtn.addEventListener('click', function () {
+      testEmailBtn.disabled = true;
+      if (testEmailStatus) {
+        testEmailStatus.style.color = 'var(--text)';
+        testEmailStatus.textContent = '⏳ جاري الاتصال بالـ SMTP وإرسال الإيميل التجريبي...';
+      }
+
+      fetch('?page=test_email')
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          testEmailBtn.disabled = false;
+          if (testEmailStatus) {
+            if (data && data.ok) {
+              testEmailStatus.style.color = '#22c55e';
+              testEmailStatus.textContent = '✅ ' + (data.message || 'تم إرسال الإيميل التجريبي بنجاح!');
+            } else {
+              testEmailStatus.style.color = '#ef4444';
+              testEmailStatus.textContent = '❌ ' + (data.message || 'فشل إرسال الإيميل. راجع بيانات الـ SMTP.');
+            }
+          }
+        })
+        .catch(function (err) {
+          testEmailBtn.disabled = false;
+          if (testEmailStatus) {
+            testEmailStatus.style.color = '#ef4444';
+            testEmailStatus.textContent = '❌ خطأ في الاتصال بالسيرفر.';
+          }
+        });
+    });
+  }
 })();

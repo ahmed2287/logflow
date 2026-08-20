@@ -761,11 +761,19 @@ switch ($page) {
             }
 
             $new = [
-                'sources'     => $sources,
-                'patterns'    => $patterns ?: DEFAULT_CONFIG['patterns'],
-                'recursive'   => isset($_POST['recursive']),
-                'tail_lines'  => max(10, min(20000, (int)($_POST['tail_lines'] ?? 500))),
-                'max_view_mb' => max(1, min(500, (int)($_POST['max_view_mb'] ?? 20))),
+                'sources'          => $sources,
+                'patterns'         => $patterns ?: DEFAULT_CONFIG['patterns'],
+                'recursive'        => isset($_POST['recursive']),
+                'tail_lines'       => max(10, min(20000, (int)($_POST['tail_lines'] ?? 500))),
+                'max_view_mb'      => max(1, min(500, (int)($_POST['max_view_mb'] ?? 20))),
+                'email_enabled'    => !empty($_POST['email_enabled']),
+                'smtp_host'        => trim((string)($_POST['smtp_host'] ?? 'smtp.gmail.com')),
+                'smtp_port'        => max(1, min(65535, (int)($_POST['smtp_port'] ?? 587))),
+                'smtp_crypto'      => in_array((string)($_POST['smtp_crypto'] ?? ''), ['tls', 'ssl', 'none'], true) ? (string)$_POST['smtp_crypto'] : 'tls',
+                'smtp_user'        => trim((string)($_POST['smtp_user'] ?? '')),
+                'smtp_pass'        => (string)($_POST['smtp_pass'] ?? ''),
+                'alert_recipient'  => trim((string)($_POST['alert_recipient'] ?? '')),
+                'cooldown_minutes' => max(1, min(1440, (int)($_POST['cooldown_minutes'] ?? 5))),
             ];
 
             if (config_save($new)) {

@@ -22,14 +22,22 @@ if (!is_dir(DATA_PATH)) {
 /* ---------------------------------------------------------------- config */
 
 const DEFAULT_CONFIG = [
-    'sources'      => [
+    'sources'          => [
         ['name' => 'System-Logs', 'path' => '/var/log', 'type' => 'dir'],
         ['name' => 'Nginx-Log', 'path' => '/var/log/nginx', 'type' => 'dir'],
     ],
-    'patterns'     => ['*.log', '*.txt', 'syslog*', 'messages*', 'auth*', 'kern*', 'dmesg*', 'dpkg*', 'boot*', 'alternatives*', '*.gz'],
-    'recursive'    => false,
-    'tail_lines'   => 500,
-    'max_view_mb'  => 20,
+    'patterns'         => ['*.log', '*.txt', 'syslog*', 'messages*', 'auth*', 'kern*', 'dmesg*', 'dpkg*', 'boot*', 'alternatives*', '*.gz'],
+    'recursive'        => false,
+    'tail_lines'       => 500,
+    'max_view_mb'      => 20,
+    'email_enabled'    => false,
+    'smtp_host'        => 'smtp.gmail.com',
+    'smtp_port'        => 587,
+    'smtp_crypto'      => 'tls',
+    'smtp_user'        => '',
+    'smtp_pass'        => '',
+    'alert_recipient'  => '',
+    'cooldown_minutes' => 5,
 ];
 
 function config_load(): array
@@ -177,3 +185,4 @@ require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/audit.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/logs.php';
+require_once __DIR__ . '/notifier.php';
