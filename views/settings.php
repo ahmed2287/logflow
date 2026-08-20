@@ -35,10 +35,11 @@ layout_start();
           <select name="sources[<?= $i ?>][type]" class="source-type" style="width: 155px; font-size: 0.84rem;">
             <option value="dir" <?= $stype === 'dir' ? 'selected' : '' ?>>📂 <?= __('مجلد لوجات') ?></option>
             <option value="docker" <?= $stype === 'docker' ? 'selected' : '' ?>>🐳 <?= __('دوكر كومبوز') ?></option>
+            <option value="cmd" <?= ($stype === 'cmd' || $stype === 'command') ? 'selected' : '' ?>>⚡ <?= __('أمر سيستم / كوماتد') ?></option>
           </select>
           <input type="text" name="sources[<?= $i ?>][path]" value="<?= e($source['path']) ?>"
-                 class="mono ltr source-path" placeholder="/var/log/myapp <?= __('أو') ?> /app/docker-compose.yml" dir="ltr" style="flex: 1; min-width: 220px;">
-          <span class="tag <?= $ok ? 'tag-success' : 'tag-warn' ?>"><?= $ok ? ($stype === 'docker' ? '🐳 Docker' : (is_writable((string)$real) ? __('صالح') : __('قراءة فقط'))) : __('غير صالح') ?></span>
+                 class="mono ltr source-path" placeholder="/var/log/myapp | /app/docker-compose.yml | journalctl -n 300 --no-pager" dir="ltr" style="flex: 1; min-width: 220px;">
+          <span class="tag <?= ($stype === 'cmd' || $stype === 'command') ? 'tag-info' : ($ok ? 'tag-success' : 'tag-warn') ?>"><?= ($stype === 'cmd' || $stype === 'command') ? '⚡ Command Stream' : ($ok ? ($stype === 'docker' ? '🐳 Docker' : (is_writable((string)$real) ? __('صالح') : __('قراءة فقط'))) : __('غير صالح')) ?></span>
           <label style="color: var(--danger); cursor: pointer; display: inline-flex; align-items: center; gap: 0.2rem;" title="<?= e(__('حذف من القائمة')) ?>">
             <input type="checkbox" name="sources[<?= $i ?>][remove]" value="1"> ✕
           </label>
@@ -49,8 +50,9 @@ layout_start();
         <select name="sources[new0][type]" class="source-type" style="width: 155px; font-size: 0.84rem;">
           <option value="dir">📂 <?= __('مجلد لوجات') ?></option>
           <option value="docker">🐳 <?= __('دوكر كومبوز') ?></option>
+          <option value="cmd">⚡ <?= __('أمر سيستم / كوماتد') ?></option>
         </select>
-        <input type="text" name="sources[new0][path]" class="mono ltr source-path" placeholder="/var/log/myapp <?= __('أو') ?> /app/docker-compose.yml" dir="ltr" style="flex: 1; min-width: 220px;">
+        <input type="text" name="sources[new0][path]" class="mono ltr source-path" placeholder="/var/log/myapp | journalctl -n 300 --no-pager | docker compose logs" dir="ltr" style="flex: 1; min-width: 220px;">
       </div>
     </div>
     <button class="btn btn-ghost btn-sm" type="button" id="add-source" style="margin-top: 0.75rem;">＋ <?= __('مسار آخر') ?></button>

@@ -533,6 +533,7 @@ return [
     'سريع وآمن'              => 'Fast & Secure',
     'أعلى العمليات النشطة'   => 'Top Active Processes',
 
+    'أمر سيستم / كوماتد' => 'Command Stream',
     'LogFlow — لوحة إدارة ومتابعة اللوجات' => 'LogFlow — Log Management & Monitoring Dashboard',
     'أو' => 'or',
     'إظهار/إخفاء كلمة المرور' => 'Show/Hide Password',

@@ -16,11 +16,12 @@ function log_sources(): array
 {
     $out = [];
     foreach ((array)config('sources', []) as $source) {
-        $name = trim((string)($source['name'] ?? ''));
-        $path = trim((string)($source['path'] ?? ''));
-        $type = trim((string)($source['type'] ?? 'dir'));
-        if ($name !== '' && $path !== '') {
-            $out[] = ['name' => $name, 'path' => $path, 'type' => $type];
+        $name    = trim((string)($source['name'] ?? ''));
+        $path    = trim((string)($source['path'] ?? ''));
+        $command = trim((string)($source['command'] ?? $path));
+        $type    = trim((string)($source['type'] ?? 'dir'));
+        if ($name !== '' && ($path !== '' || $command !== '')) {
+            $out[] = ['name' => $name, 'path' => $path ?: $command, 'type' => $type, 'command' => $command];
         }
     }
     return $out;
@@ -201,6 +202,68 @@ function docker_fetch_logs(string $composePath, string $service, int $maxLines =
 }
 
 /**
+ * Execute system command safely and capture output stream
+ */
+function exec_command_log_output(string $cmd, int $maxLines = 500): string
+{
+    if (empty($cmd)) {
+        return "⚠️ Empty command specified.";
+    }
+
+    $descriptors = [
+        0 => ['pipe', 'r'],
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w'],
+    ];
+
+    $process = @proc_open($cmd, $descriptors, $pipes, BASE_PATH);
+    if (!is_resource($process)) {
+        return "❌ Error: Failed to execute system command: " . e($cmd);
+    }
+
+    fclose($pipes[0]);
+    stream_set_blocking($pipes[1], false);
+    stream_set_blocking($pipes[2], false);
+
+    $stdout = '';
+    $stderr = '';
+    $startTime = microtime(true);
+
+    while (true) {
+        $r = [$pipes[1], $pipes[2]];
+        $w = null;
+        $e = null;
+
+        if (stream_select($r, $w, $e, 1) > 0) {
+            $stdout .= stream_get_contents($pipes[1]);
+            $stderr .= stream_get_contents($pipes[2]);
+        }
+
+        $status = proc_get_status($process);
+        if (!$status['running'] || (microtime(true) - $startTime) > 5) {
+            break;
+        }
+    }
+
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    proc_terminate($process);
+    proc_close($process);
+
+    $out = trim($stdout . ($stderr ? "\n[STDERR]\n" . $stderr : ''));
+    if ($out === '') {
+        return "⚠️ Command executed cleanly, but returned no log output.";
+    }
+
+    $linesArray = explode("\n", $out);
+    if (count($linesArray) > $maxLines) {
+        $linesArray = array_slice($linesArray, -$maxLines);
+    }
+
+    return implode("\n", $linesArray);
+}
+
+/**
  * Resolve a browser-supplied relative path to an absolute path inside the log
  * dir, or null if it escapes, doesn't exist, or isn't a regular file.
  */
@@ -212,6 +275,10 @@ function log_resolve(string $relative): ?string
             $service = substr($relative, 7, -4);
             return $source['path'] . '::' . $service;
         }
+    }
+
+    if ($source && (($source['type'] ?? '') === 'cmd' || ($source['type'] ?? '') === 'command')) {
+        return 'cmd::' . ($source['command'] ?? $source['path']);
     }
 
     $base = log_dir();
@@ -289,6 +356,22 @@ function log_list(array $options = [], ?array &$skipped = null): array
         }
 
         log_sort($files, (string)($options['sort'] ?? 'mtime'), (string)($options['dir'] ?? 'desc'));
+        return $files;
+    }
+
+    // Command Log Virtual Source
+    if ($source && (($source['type'] ?? '') === 'cmd' || ($source['type'] ?? '') === 'command')) {
+        $cmd      = trim((string)($source['command'] ?? $source['path']));
+        $safeName = 'cmd_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $source['name']) . '.log';
+        $files    = [[
+            'name'     => $safeName,
+            'rel'      => $safeName,
+            'path'     => 'cmd::' . $cmd,
+            'size'     => 1024 * 50,
+            'mtime'    => time(),
+            'age_days' => 0,
+            'writable' => false,
+        ]];
         return $files;
     }
 
@@ -394,6 +477,16 @@ function log_totals(array $files): array
  */
 function log_tail(string $path, int $lines = 500): array
 {
+    if (str_starts_with($path, 'cmd::')) {
+        $cmd     = substr($path, 5);
+        $content = exec_command_log_output($cmd, $lines);
+        return [
+            'content'   => $content,
+            'truncated' => false,
+            'size'      => strlen($content),
+        ];
+    }
+
     if (str_contains($path, '::')) {
         [$composePath, $service] = explode('::', $path, 2);
         $content = docker_fetch_logs($composePath, $service, $lines);

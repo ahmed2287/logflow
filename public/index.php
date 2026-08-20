@@ -734,7 +734,10 @@ switch ($page) {
                     continue;
                 }
 
-                if ($type === 'docker') {
+                if ($type === 'cmd' || $type === 'command') {
+                    $seen[$key] = true;
+                    $sources[]  = ['name' => $name, 'path' => $path, 'command' => $path, 'type' => 'cmd'];
+                } elseif ($type === 'docker') {
                     $real = realpath($path);
                     $seen[$key] = true;
                     $sources[]  = ['name' => $name, 'path' => $real ?: $path, 'type' => 'docker'];
