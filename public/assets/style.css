@@ -535,7 +535,7 @@ body.with-nav {
   font-size: 2rem;
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: #ffffff;
+  color: var(--text);
   margin-bottom: 0.4rem;
 }
 
@@ -640,7 +640,7 @@ body.with-nav {
   margin: 0;
   font-size: 1.1rem;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text);
 }
 
 /* Chart Columns Mock */
@@ -720,7 +720,7 @@ body.with-nav {
 
 .legend-val {
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text);
 }
 
 /* Flow Insights Banner at Bottom */
