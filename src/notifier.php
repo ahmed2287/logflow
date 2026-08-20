@@ -348,17 +348,17 @@ function notify_send_test_webhook(): array
 }
 
 /**
- * Rate-limited Alert Trigger on New Error Detection
+ * Rate-limited Alert Trigger on New Error Detection across Email, Mattermost, Telegram & Generic Webhooks
  */
 function notify_on_log_error(string $errorSnippet, string $filename): void
 {
-    if (!config('email_enabled', false)) {
-        return;
-    }
+    $emailEnabled      = (bool)config('email_enabled', false);
+    $mattermostEnabled = (bool)config('mattermost_enabled', false);
+    $telegramEnabled   = (bool)config('telegram_enabled', false);
+    $webhookEnabled    = (bool)config('webhook_enabled', false);
 
-    $to = (string)config('alert_recipient', '');
-    if (empty($to)) {
-        return;
+    if (!$emailEnabled && !$mattermostEnabled && !$telegramEnabled && !$webhookEnabled) {
+        return; // No notification channel enabled
     }
 
     $cooldownMinutes = (int)config('cooldown_minutes', 5);
@@ -372,26 +372,82 @@ function notify_on_log_error(string $errorSnippet, string $filename): void
     $lastSent = (int)($state[$key] ?? 0);
 
     if (time() - $lastSent < ($cooldownMinutes * 60)) {
-        return; // Rate limited
+        return; // Throttled / Cooldown active
     }
 
     $state[$key] = time();
     @file_put_contents($stateFile, json_encode($state, JSON_PRETTY_PRINT));
 
-    $host   = (string)config('smtp_host', '');
-    $port   = (int)config('smtp_port', 587);
-    $crypto = (string)config('smtp_crypto', 'tls');
-    $user   = (string)config('smtp_user', '');
-    $pass   = (string)config('smtp_pass', '');
+    // 1. Send Email Alert
+    if ($emailEnabled) {
+        $to = (string)config('alert_recipient', '');
+        if (!empty($to)) {
+            $host     = (string)config('smtp_host', '');
+            $port     = (int)config('smtp_port', 587);
+            $crypto   = (string)config('smtp_crypto', 'tls');
+            $user     = (string)config('smtp_user', '');
+            $pass     = (string)config('smtp_pass', '');
+            $subject  = '🚨 [LogFlow Alert] خطأ جديد في الملف: ' . $filename;
+            $fileLink = '<a href="?page=view&file=' . urlencode($filename) . '" class="btn">👁️ فتح وعرض الخطأ في النظام</a>';
+            $bodyHtml = render_alert_email_html(
+                'خطأ في ملف: ' . e($filename),
+                e(substr($errorSnippet, 0, 1000)),
+                $fileLink
+            );
+            smtp_send_email($host, $port, $crypto, $user, $pass, $to, $subject, $bodyHtml);
+        }
+    }
 
-    $subject  = '🚨 [LogFlow Alert] خطأ جديد في الملف: ' . $filename;
-    $fileLink = '<a href="?page=view&file=' . urlencode($filename) . '" class="btn">👁️ فتح وعرض الخطأ في النظام</a>';
+    // 2. Send Mattermost Alert
+    if ($mattermostEnabled) {
+        $mmUrl = (string)config('mattermost_webhook_url', '');
+        if (!empty($mmUrl)) {
+            $username = (string)config('mattermost_username', 'LogFlow Alert');
+            $channel  = (string)config('mattermost_channel', '');
+            $payload  = [
+                'text'     => "🚨 **[LogFlow Error Alert]**\n\n**الملف:** `" . $filename . "`\n**الخطأ:**\n```\n" . substr($errorSnippet, 0, 800) . "\n```\n📅 **التوقيت:** " . date('Y-m-d H:i:s'),
+                'username' => $username,
+            ];
+            if (!empty($channel)) {
+                $payload['channel'] = $channel;
+            }
+            send_http_json_post($mmUrl, $payload);
+        }
+    }
 
-    $bodyHtml = render_alert_email_html(
-        'خطأ في ملف: ' . e($filename),
-        e(substr($errorSnippet, 0, 1000)),
-        $fileLink
-    );
+    // 3. Send Telegram Alert
+    if ($telegramEnabled) {
+        $token  = (string)config('telegram_bot_token', '');
+        $chatId = (string)config('telegram_chat_id', '');
+        if (!empty($token) && !empty($chatId)) {
+            $tgUrl   = 'https://api.telegram.org/bot' . urlencode($token) . '/sendMessage';
+            $text    = "🚨 <b>[LogFlow Error Alert]</b>\n\n📁 <b>الملف:</b> <code>" . e($filename) . "</code>\n\n<code>" . e(substr($errorSnippet, 0, 500)) . "</code>\n\n📅 <b>التوقيت:</b> " . date('Y-m-d H:i:s');
+            $payload = [
+                'chat_id'    => $chatId,
+                'text'       => $text,
+                'parse_mode' => 'HTML',
+            ];
+            send_http_json_post($tgUrl, $payload);
+        }
+    }
 
-    smtp_send_email($host, $port, $crypto, $user, $pass, $to, $subject, $bodyHtml);
+    // 4. Send Generic Webhook Payload
+    if ($webhookEnabled) {
+        $whUrl = (string)config('webhook_url', '');
+        if (!empty($whUrl)) {
+            $secret  = (string)config('webhook_secret', '');
+            $payload = [
+                'event'        => 'log_error',
+                'filename'     => $filename,
+                'snippet'      => substr($errorSnippet, 0, 1000),
+                'timestamp'    => date('Y-m-d H:i:s'),
+                'server_time'  => time(),
+            ];
+            $headers = ['Content-Type: application/json'];
+            if (!empty($secret)) {
+                $headers[] = 'X-LogFlow-Secret: ' . $secret;
+            }
+            send_http_json_post($whUrl, $payload, $headers);
+        }
+    }
 }
