@@ -643,14 +643,21 @@
     var status = document.getElementById(statusId);
     if (!btn) return;
 
-    btn.addEventListener('click', function () {
+    btn.addEventListener('click', function (e) {
+      if (e) e.preventDefault();
       btn.disabled = true;
       if (status) {
         status.style.color = 'var(--text)';
         status.textContent = loadingMsg || '⏳ جاري إرسال التنبيه التجريبي...';
       }
 
-      fetch(endpoint)
+      var form = btn.closest('form');
+      var formData = form ? new FormData(form) : new FormData();
+
+      fetch(endpoint, {
+        method: 'POST',
+        body: formData
+      })
         .then(function (res) { return res.json(); })
         .then(function (data) {
           btn.disabled = false;
