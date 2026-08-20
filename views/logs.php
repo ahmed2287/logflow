@@ -104,7 +104,7 @@ layout_start();
               <td>
                 <div style="display: flex; align-items: center; gap: 0.6rem;">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="width: 18px; height: 18px; max-width: 18px; max-height: 18px; color: var(--accent);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                  <a class="mono ltr" style="font-weight: 700; color: #ffffff;" href="?page=view&amp;file=<?= urlencode($file['rel']) ?><?= e(src_qs()) ?>"><?= e($file['rel']) ?></a>
+                  <a class="mono ltr" style="font-weight: 700; color: var(--text);" href="?page=view&amp;file=<?= urlencode($file['rel']) ?><?= e(src_qs()) ?>"><?= e($file['rel']) ?></a>
                 </div>
               </td>
               <td class="col-num mono"><?= bytes_html($file['size']) ?></td>

@@ -198,7 +198,7 @@ summary { list-style: none; cursor: pointer; }
         <?php endif; ?>
       </summary>
       <div class="dropdown-body" style="position: absolute; inset-inline-end: 0; top: 115%; width: 320px; background: var(--surface-solid); border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 1rem; box-shadow: var(--shadow-lg); z-index: 100;">
-        <h4 style="margin: 0 0 0.75rem; font-size: 0.95rem; font-weight: 700; color: #ffffff; display: flex; align-items: center; justify-content: space-between;">
+        <h4 style="margin: 0 0 0.75rem; font-size: 0.95rem; font-weight: 700; color: var(--text); display: flex; align-items: center; justify-content: space-between;">
           <span>🔔 <?= __('الإشعارات') ?></span>
           <span class="tag tag-info"><?= $pendingCount ?> <?= __('جديد') ?></span>
         </h4>
