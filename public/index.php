@@ -854,6 +854,34 @@ switch ($page) {
         ]);
         break;
 
+    /* ---------------------------------------------------- integrations */
+    case 'integrations':
+        require_login();
+        if ($method === 'POST') {
+            csrf_check();
+            $before = config_load();
+            $new    = array_merge($before, [
+                'webhook_enabled' => !empty($_POST['webhook_enabled']),
+                'webhook_url'     => trim((string)($_POST['webhook_url'] ?? '')),
+                'webhook_format'  => in_array((string)($_POST['webhook_format'] ?? ''), ['json', 'slack'], true) ? (string)$_POST['webhook_format'] : 'json',
+                'webhook_secret'  => (string)($_POST['webhook_secret'] ?? ''),
+            ]);
+
+            if (config_save($new)) {
+                audit_log('integrations', ['before' => $before, 'after' => $new]);
+                flash('success', __('تم حفظ إعدادات الـ Webhook والتكاملات بنجاح.'));
+            } else {
+                flash('error', __('تعذّر كتابة ملف الإعدادات.'));
+            }
+            redirect('?page=integrations');
+        }
+
+        view('integrations', [
+            'flashes' => flash_take(),
+            'config'  => config_load(),
+        ]);
+        break;
+
     /* ------------------------------------------------------------ users */
     case 'users':
         require_admin();

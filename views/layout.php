@@ -112,6 +112,11 @@ summary { list-style: none; cursor: pointer; }
       <span><?= __('التنبيهات والإشعارات') ?></span>
     </a>
 
+    <a class="nav-link <?= $page === 'integrations' ? 'is-active' : '' ?>" href="?page=integrations<?= e(src_qs()) ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="width: 20px; height: 20px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+      <span><?= __('الربط والتكاملات') ?></span>
+    </a>
+
     <?php if (is_admin()): ?>
       <a class="nav-link <?= $page === 'users' ? 'is-active' : '' ?>" href="?page=users<?= e(src_qs()) ?>">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="width: 20px; height: 20px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>

@@ -2,7 +2,7 @@
 /** @var array $config @var array $flashes */
 $config = $config ?? config_load();
 $tab    = (string)($_GET['tab'] ?? 'email');
-if (!in_array($tab, ['email', 'mattermost', 'telegram', 'webhook'], true)) {
+if (!in_array($tab, ['email', 'mattermost', 'telegram'], true)) {
     $tab = 'email';
 }
 layout_start();
@@ -26,9 +26,6 @@ layout_start();
   </a>
   <a class="btn <?= $tab === 'telegram' ? 'btn-primary is-active-tab' : '' ?>" href="?page=notifications&amp;tab=telegram">
     <span>🤖</span> <span style="color: #ffffff; font-weight: 700;"><?= __('تليجرام (Telegram)') ?></span>
-  </a>
-  <a class="btn <?= $tab === 'webhook' ? 'btn-primary is-active-tab' : '' ?>" href="?page=notifications&amp;tab=webhook">
-    <span>🔗</span> <span style="color: #ffffff; font-weight: 700;"><?= __('ويب هوك عام (Webhooks)') ?></span>
   </a>
 </nav>
 
@@ -186,41 +183,6 @@ layout_start();
         <button class="btn btn-primary" type="submit">💾 <?= __('حفظ إعدادات تليجرام') ?></button>
         <button class="btn btn-ghost" type="button" id="btn-test-telegram" style="border: 1px solid var(--accent); color: var(--accent); font-weight: 700;">🧪 <?= __('إرسال تنبيه تجريبي لـ Telegram') ?></button>
         <div id="test-telegram-status" style="font-size: 0.88rem; font-weight: 700;"></div>
-      </div>
-    </div>
-  </form>
-<?php endif; ?>
-
-<!-- Tab 4: Generic Webhook Settings -->
-<?php if ($tab === 'webhook'): ?>
-  <form class="saas-card" method="post" action="?page=notifications&amp;tab=webhook" style="margin-bottom: 2rem;">
-    <?= csrf_field() ?>
-    <input type="hidden" name="channel_tab" value="webhook">
-
-    <div style="margin-bottom: 1.5rem;">
-      <h3 style="margin-top: 0; font-size: 1.1rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.5rem;">
-        <span>🔗</span> <?= __('إعدادات الـ Webhooks العامة (Generic Webhook Payload)') ?>
-      </h3>
-      <p class="muted small" style="margin-bottom: 1.25rem;">
-        <?= __('توجيه حمولة JSON فورية عند حدوث أي خطأ إلى خوادمك وقنوات Slack أو Discord الخاصة بك.') ?>
-      </p>
-
-      <div style="margin-bottom: 1.25rem; background: var(--surface-2); padding: 0.85rem 1.1rem; border-radius: var(--radius); border: 1px solid var(--border);">
-        <label style="display: flex; align-items: center; gap: 0.65rem; font-weight: 700; cursor: pointer; color: var(--text);">
-          <input type="checkbox" name="webhook_enabled" value="1" <?= !empty($config['webhook_enabled']) ? 'checked' : '' ?> style="width: 20px; height: 20px;">
-          <span><?= __('تفعيل الـ Webhook العام (Enable Generic Webhook Alerts)') ?></span>
-        </label>
-      </div>
-
-      <div style="margin-bottom: 1.5rem;">
-        <label style="display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; color: var(--text);"><?= __('رابط الـ Webhook (Endpoint URL)') ?></label>
-        <input type="url" name="webhook_url" value="<?= e($config['webhook_url'] ?? '') ?>" class="mono ltr" placeholder="https://api.example.com/webhooks/logflow-alerts" dir="ltr" style="width: 100%;">
-      </div>
-
-      <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-        <button class="btn btn-primary" type="submit">💾 <?= __('حفظ إعدادات الـ Webhook') ?></button>
-        <button class="btn btn-ghost" type="button" id="btn-test-webhook" style="border: 1px solid var(--accent); color: var(--accent); font-weight: 700;">🧪 <?= __('إرسال تنبيه تجريبي لـ Webhook') ?></button>
-        <div id="test-webhook-status" style="font-size: 0.88rem; font-weight: 700;"></div>
       </div>
     </div>
   </form>
